@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dog Shelter Walk Dashboard</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Dog Shelter</p>
+          <h1>Walk Dashboard</h1>
+          <p class="subtitle">Weekly walks per dog — underwalked dogs are highlighted.</p>
+        </div>
+        <div class="header-actions">
+          <label class="field">
+            <span>Week starting</span>
+            <select id="week-select" aria-label="Select week"></select>
+          </label>
+          <button id="refresh-btn" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <section id="status-banner" class="status-banner hidden" role="status"></section>
+
+      <section class="summary-grid" id="summary-grid">
+        <article class="summary-card">
+          <p class="summary-label">Dogs tracked</p>
+          <p class="summary-value" id="total-dogs">—</p>
+        </article>
+        <article class="summary-card">
+          <p class="summary-label">Walks this week</p>
+          <p class="summary-value" id="total-walks">—</p>
+        </article>
+        <article class="summary-card">
+          <p class="summary-label">Dogs walked</p>
+          <p class="summary-value" id="dogs-walked">—</p>
+        </article>
+        <article class="summary-card alert-card">
+          <p class="summary-label">Underwalked</p>
+          <p class="summary-value" id="underwalked-count">—</p>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Walks by month</h2>
+          <label class="field field-inline">
+            <span>Dog</span>
+            <select id="chart-dog-select" aria-label="Filter chart by dog">
+              <option value="__all__">All dogs</option>
+            </select>
+          </label>
+        </div>
+        <div id="monthly-chart" class="monthly-chart" role="img" aria-label="Monthly walks per dog line chart"></div>
+        <div id="chart-legend" class="chart-legend"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Walk heatmap</h2>
+          <p class="week-range">Darker cells = more walks that month</p>
+        </div>
+        <div class="heatmap-wrap">
+          <div id="walk-heatmap" class="walk-heatmap"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Dogs this week</h2>
+          <p id="week-range" class="week-range"></p>
+        </div>
+        <div id="dog-grid" class="dog-grid"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Walk log detail</h2>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dog</th>
+                <th>Walks</th>
+                <th>Status</th>
+                <th>Walk dates</th>
+              </tr>
+            </thead>
+            <tbody id="walk-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

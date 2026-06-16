@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: dog-shelter-walks
+    runtime: python
+    plan: free
+    buildCommand: echo "No build step required"
+    startCommand: python3 server.py
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: UNDERWALKED_THRESHOLD
+        value: "1"
+      - key: GOOGLE_SHEET_CSV_URL
+        sync: false
