@@ -8,7 +8,9 @@ A lightweight web dashboard for dog shelter volunteers and staff. It reads a wal
 
 ## Dashboard preview
 
-![Dog Shelter Walk Dashboard](dashboard_screenshot.png)
+[![Dog Shelter Walk Dashboard](new.png)](https://dog-shelter-walks.onrender.com/)
+
+*Click the screenshot to open the live dashboard.*
 
 ## Features
 
