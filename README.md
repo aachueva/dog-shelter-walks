@@ -1,6 +1,14 @@
 # Dog Shelter Walk Dashboard
 
-A lightweight web dashboard for dog shelter volunteers and staff. It reads your walk log from a public Google Sheet and highlights dogs that are underwalked each week.
+A lightweight web dashboard for dog shelter volunteers and staff. It reads a walk log from a public Google Sheet and highlights dogs that are underwalked each week.
+
+## Live demo
+
+**[Open the live Dog Shelter Walk Dashboard](https://dog-shelter-walks.onrender.com/)**
+
+## Dashboard preview
+
+![Dog Shelter Walk Dashboard](dashboard_screenshot.png)
 
 ## Features
 
@@ -73,20 +81,16 @@ Without a sheet URL configured, the app uses `sample-data.csv` so you can previe
 
 ## Deploy to the web
 
-To share the dashboard with anyone via a public link, deploy it to [Render](https://render.com) (free tier works).
+The public deployment is available at **https://dog-shelter-walks.onrender.com/**.
+
+To deploy your own copy with Render:
 
 1. Push this project to a GitHub repository.
-
 2. In Render, click **New → Blueprint** and connect the repo. Render reads `render.yaml` automatically.
+3. When prompted, set `GOOGLE_SHEET_CSV_URL` to your sheet's CSV export URL.
+4. Click **Apply**. Render builds and deploys the app.
 
-3. When prompted, set the environment variable:
-   - `GOOGLE_SHEET_CSV_URL` = your sheet's CSV export URL  
-     (same URL as in `.env`)
-
-4. Click **Apply**. Render builds and deploys the app, then gives you a public URL like:
-   `https://dog-shelter-walks.onrender.com`
-
-Anyone with that link can open the dashboard. Your Google Sheet must stay shared as **Anyone with the link can view** so the server can read walk data.
+Your Google Sheet must stay shared as **Anyone with the link can view** so the server can read walk data.
 
 **Docker alternative:** build and run anywhere that supports containers:
 
