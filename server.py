@@ -141,7 +141,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def end_headers(self) -> None:
-        if not self.path.startswith("/api/"):
+        if self.path in ("/", "/index.html"):
+            self.send_header("Cache-Control", "no-cache")
+        elif not self.path.startswith("/api/"):
             self.send_header("Cache-Control", "public, max-age=3600")
         super().end_headers()
 
