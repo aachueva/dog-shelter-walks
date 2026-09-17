@@ -1,190 +1,170 @@
-import { renderCharts } from "./charts.js";
+const $ = (id) => document.getElementById(id);
+const refreshBtn = $("refresh-btn");
+const statusBanner = $("status-banner");
 
-const weekSelect = document.getElementById("week-select");
-const refreshBtn = document.getElementById("refresh-btn");
-const statusBanner = document.getElementById("status-banner");
-const totalDogsEl = document.getElementById("total-dogs");
-const totalWalksEl = document.getElementById("total-walks");
-const dogsWalkedEl = document.getElementById("dogs-walked");
-const underwalkedCountEl = document.getElementById("underwalked-count");
-const weekRangeEl = document.getElementById("week-range");
-const dogGridEl = document.getElementById("dog-grid");
-const walkTableBodyEl = document.getElementById("walk-table-body");
-const monthlyChartEl = document.getElementById("monthly-chart");
-const chartLegendEl = document.getElementById("chart-legend");
-const walkHeatmapEl = document.getElementById("walk-heatmap");
-const chartDogSelect = document.getElementById("chart-dog-select");
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+});
+const shortDateFormatter = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  day: "numeric",
+});
+const weekdayFormatter = new Intl.DateTimeFormat(undefined, { weekday: "short" });
 
-let latestMonthlyStats = null;
-
-function formatWeekLabel(isoDate) {
-  const start = new Date(`${isoDate}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
-
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-
-  return `${formatter.format(start)} – ${formatter.format(end)}`;
+function parseDate(isoDate) {
+  return new Date(`${isoDate}T12:00:00`);
 }
 
-function formatDisplayDate(isoDate) {
-  return new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(`${isoDate}T00:00:00`));
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-function showStatus(message, type = "error") {
+function setStatus(message = "", type = "error") {
   statusBanner.textContent = message;
-  statusBanner.classList.remove("hidden", "info");
-  if (type === "info") {
-    statusBanner.classList.add("info");
-  }
+  statusBanner.className = message ? `status ${type}` : "status hidden";
 }
 
-function hideStatus() {
-  statusBanner.classList.add("hidden");
+function describeLastWalk(dog) {
+  if (dog.walkedToday) return dog.walksToday > 1 ? `${dog.walksToday} walks today` : "Walked today";
+  if (dog.daysSinceWalk == null) return "No walks recorded";
+  if (dog.daysSinceWalk === 1) return "Last walked yesterday";
+  return `Last walked ${dog.daysSinceWalk} days ago`;
 }
 
-function renderWeekOptions(weeks, selectedWeek) {
-  weekSelect.innerHTML = "";
-
-  for (const week of weeks) {
-    const option = document.createElement("option");
-    option.value = week;
-    option.textContent = formatWeekLabel(week);
-    option.selected = week === selectedWeek;
-    weekSelect.appendChild(option);
-  }
+function renderPriorityCard(dog, rank) {
+  const article = document.createElement("article");
+  article.className = "priority-card";
+  article.innerHTML = `
+    <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
+    <div>
+      <h3>${escapeHtml(dog.dog)}</h3>
+      <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
+      <p class="recent-count">${dog.walksLast14Days} walk${dog.walksLast14Days === 1 ? "" : "s"} in 14 days</p>
+    </div>
+  `;
+  return article;
 }
 
-function renderSummary(data) {
-  totalDogsEl.textContent = data.summary.totalDogs;
-  totalWalksEl.textContent = data.summary.totalWalks;
-  dogsWalkedEl.textContent = data.summary.dogsWalked;
-  underwalkedCountEl.textContent = data.summary.underwalkedCount;
-  weekRangeEl.textContent = `${formatDisplayDate(data.weekStart)} to ${formatDisplayDate(data.weekEnd)}`;
+function renderDogRow(dog) {
+  const article = document.createElement("article");
+  article.className = `dog-row ${dog.walkedToday ? "walked" : ""}`;
+  article.innerHTML = `
+    <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
+    <div class="dog-main">
+      <h3>${escapeHtml(dog.dog)}</h3>
+      <p>${escapeHtml(describeLastWalk(dog))}</p>
+    </div>
+    <div class="dog-total">
+      <strong>${dog.walksLast14Days}</strong>
+      <span>14 days</span>
+    </div>
+  `;
+  return article;
 }
 
-function renderDogGrid(dogs) {
-  dogGridEl.innerHTML = "";
-
-  if (dogs.length === 0) {
-    dogGridEl.innerHTML = `<p class="dog-status">No dogs found for this week.</p>`;
-    return;
-  }
-
-  for (const dog of dogs) {
-    const card = document.createElement("article");
-    card.className = `dog-card ${dog.underwalked ? "underwalked" : "ok"}`;
-
-    const statusText = dog.underwalked
-      ? "Needs a walk this week"
-      : `${dog.walkCount} walk${dog.walkCount === 1 ? "" : "s"} completed`;
-
-    card.innerHTML = `
-      <p class="dog-name">${dog.dog}</p>
-      <p class="dog-count">${dog.walkCount}</p>
-      <p class="dog-status">${statusText}</p>
-    `;
-
-    dogGridEl.appendChild(card);
-  }
+function heatClass(count) {
+  if (count <= 0) return "heat-0";
+  if (count === 1) return "heat-1";
+  if (count === 2) return "heat-2";
+  return "heat-3";
 }
 
-function renderWalkTable(dogs) {
-  walkTableBodyEl.innerHTML = "";
+function renderHeatmap(data) {
+  const container = $("walk-heatmap");
+  container.innerHTML = "";
+  const grid = document.createElement("div");
+  grid.className = "heatmap-grid";
+  grid.style.gridTemplateColumns = `minmax(104px, 1fr) repeat(${data.dates.length}, 34px)`;
 
-  for (const dog of dogs) {
-    const row = document.createElement("tr");
+  const corner = document.createElement("div");
+  corner.className = "heat-corner";
+  corner.textContent = "Dog";
+  grid.appendChild(corner);
 
-    const walksHtml =
-      dog.walks.length === 0
-        ? "No walks logged"
-        : `<ul class="walk-list">${dog.walks
-            .map((walk) => {
-              const timeBits = [walk.checkoutTime, walk.checkinTime].filter(Boolean).join(" → ");
-              const walker = walk.walker ? ` · ${walk.walker}` : "";
-              const timeSuffix = timeBits ? ` · ${timeBits}` : "";
-              return `<li>${formatDisplayDate(walk.date)}${walker}${timeSuffix}</li>`;
-            })
-            .join("")}</ul>`;
-
-    row.innerHTML = `
-      <td>${dog.dog}</td>
-      <td>${dog.walkCount}</td>
-      <td>
-        <span class="badge ${dog.underwalked ? "badge-danger" : "badge-success"}">
-          ${dog.underwalked ? "Underwalked" : "On track"}
-        </span>
-      </td>
-      <td>${walksHtml}</td>
-    `;
-
-    walkTableBodyEl.appendChild(row);
-  }
-}
-
-function renderMonthlyVisuals() {
-  if (!latestMonthlyStats) {
-    return;
-  }
-
-  renderCharts(latestMonthlyStats, {
-    chartContainer: monthlyChartEl,
-    legendContainer: chartLegendEl,
-    heatmapContainer: walkHeatmapEl,
-    dogSelect: chartDogSelect,
+  data.dates.forEach((isoDate) => {
+    const date = parseDate(isoDate);
+    const header = document.createElement("div");
+    header.className = `heat-date ${isoDate === data.today ? "today" : ""}`;
+    header.innerHTML = `<span>${weekdayFormatter.format(date).slice(0, 1)}</span><strong>${date.getDate()}</strong>`;
+    header.title = shortDateFormatter.format(date);
+    grid.appendChild(header);
   });
+
+  data.dogs.forEach((dog) => {
+    const label = document.createElement("div");
+    label.className = `heat-dog ${dog.priority ? "priority" : ""}`;
+    label.textContent = dog.dog;
+    grid.appendChild(label);
+    data.dates.forEach((isoDate) => {
+      const count = dog.dailyCounts[isoDate] || 0;
+      const cell = document.createElement("div");
+      cell.className = `heat-cell ${heatClass(count)} ${isoDate === data.today ? "today" : ""}`;
+      cell.textContent = count || "";
+      cell.title = `${dog.dog}: ${count} walk${count === 1 ? "" : "s"} on ${shortDateFormatter.format(parseDate(isoDate))}`;
+      grid.appendChild(cell);
+    });
+  });
+  container.appendChild(grid);
 }
 
-async function loadDashboard(week) {
-  hideStatus();
+function render(data) {
+  $("today-label").textContent = dateFormatter.format(parseDate(data.today));
+  $("walks-today").textContent = data.summary.walksToday;
+  $("walked-today").textContent = `${data.summary.walkedToday}/${data.summary.totalDogs}`;
+  $("need-walk").textContent = data.summary.needWalkToday;
+  $("priority-count").textContent = `${data.priorityDogs.length} dogs`;
+  $("roster-count").textContent = `${data.otherDogs.length} dogs`;
 
-  const query = week ? `?week=${encodeURIComponent(week)}` : "";
-  const response = await fetch(`/api/walks${query}`);
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to load walk data");
+  const priorityGrid = $("priority-grid");
+  priorityGrid.className = "priority-grid";
+  priorityGrid.innerHTML = "";
+  if (!data.priorityDogs.length) {
+    priorityGrid.innerHTML = '<p class="all-walked">Every current dog has already walked today.</p>';
+  } else {
+    data.priorityDogs.forEach((dog, index) => priorityGrid.appendChild(renderPriorityCard(dog, index + 1)));
   }
 
-  latestMonthlyStats = data.monthlyStats;
-  renderWeekOptions(data.availableWeeks, data.weekStart);
-  renderSummary(data);
-  renderMonthlyVisuals();
-  renderDogGrid(data.dogs);
-  renderWalkTable(data.dogs);
+  const otherList = $("other-list");
+  otherList.innerHTML = "";
+  data.otherDogs.forEach((dog) => otherList.appendChild(renderDogRow(dog)));
+  renderHeatmap(data);
 
-  if (data.source === "sample_data") {
-    showStatus(
-      "Showing demo data from sample-data.csv. Add your Google Sheet URL to .env to go live.",
-      "info",
-    );
+  $("last-updated").textContent = `Updated ${new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(data.updatedAt))}`;
+
+  if (!data.currentDogsConfigured) {
+    setStatus("Connect the Current Dogs tab so newly arrived dogs with no walk history appear.", "info");
+  } else if (data.source === "sample_data") {
+    setStatus("Showing sample data. Connect the Google Sheet in Render to go live.", "info");
+  } else {
+    setStatus();
   }
 }
 
-async function refreshDashboard() {
+async function loadDashboard() {
   refreshBtn.disabled = true;
   refreshBtn.textContent = "Loading…";
-
   try {
-    await loadDashboard(weekSelect.value || undefined);
+    const response = await fetch("/api/dashboard", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Could not load walk data.");
+    render(data);
   } catch (error) {
-    showStatus(error.message || "Something went wrong while loading the dashboard.");
+    setStatus(error.message || "Could not load walk data. Please try again.");
   } finally {
     refreshBtn.disabled = false;
     refreshBtn.textContent = "Refresh";
   }
 }
 
-weekSelect.addEventListener("change", refreshDashboard);
-refreshBtn.addEventListener("click", refreshDashboard);
-chartDogSelect.addEventListener("change", renderMonthlyVisuals);
-window.addEventListener("resize", renderMonthlyVisuals);
-
-refreshDashboard();
+refreshBtn.addEventListener("click", loadDashboard);
+loadDashboard();

@@ -1,133 +1,93 @@
 # Dog Shelter Walk Dashboard
 
-A lightweight web dashboard for dog shelter volunteers and staff. It reads a walk log from a public Google Sheet and highlights dogs that are underwalked each week.
+A fast, phone-first dashboard that tells shelter volunteers which dogs should be walked next. It reads two tabs from one public Google Sheet:
 
-## Live demo
+- **Current Dogs** is the authoritative shelter roster.
+- **Walks** stores each dog's walk dates across the row.
 
-**[Open the live Dog Shelter Walk Dashboard](https://dog-shelter-walks.onrender.com/)**
+Dogs that only appear in historical data are excluded. New dogs appear immediately even when they have no walk history.
 
-## Dashboard preview
+## How prioritization works
 
-[![Dog Shelter Walk Dashboard](new.png)](https://dog-shelter-walks.onrender.com/)
+The dashboard features three dogs by default. A dog already walked today is not eligible. The remaining dogs are ranked by:
 
-*Click the screenshot to open the live dashboard.*
+1. Fewest walks in the trailing 14 days
+2. Longest time since the last recorded walk
+3. Dog name, for deterministic ties
 
-## Features
+Set `DAILY_PRIORITY_COUNT` to change the number featured.
 
-- Weekly walks per dog
-- Underwalked dogs highlighted in red (default: fewer than 1 walk per week)
-- Summary cards for total walks, dogs walked, and underwalked count
-- Walk detail table with dates (and optional walker / check-in times if your sheet has them)
-- Works with demo data out of the box
+## Google Sheet layout
 
-## Expected Google Sheet layout
+**Current Dogs**
 
-The dashboard supports two sheet layouts:
+| Column A |
+|---|
+| Frankie Avalon |
+| Duke |
+| Pixie |
 
-**Option A — walk log (two columns)**
+**Walks**
 
-| Dog Name | Date of Walk |
-|----------|--------------|
-| Buddy | 2026-06-09 |
-| Luna | 6/10/2026 |
+| Column A | Column B | Column C |
+|---|---|---|
+| Frankie Avalon | Sep 13 | Sep 5 |
+| Duke | Sep 6 | Aug 30 |
+| Pixie | | |
 
-Required columns: **Dog Name**, **Date of Walk** (flexible header naming is supported)
+Whitespace and capitalization are normalized when the two tabs are joined.
 
-Optional extra columns: **Walker Name**, **Checking Out**, **Checking In**
+## Run locally
 
-**Option B — wide matrix (dog names in column A)**
+1. Copy `.env.example` to `.env`.
+2. Share the Google Sheet as **Anyone with the link can view**.
+3. Put the spreadsheet ID in `.env`:
 
-| holden | Jan 4 | Jan 3 | Dec 7 |
-| franklin | Jan 4 | Dec 14 | Dec 21 |
-
-Each row is a dog; each cell after column A is a walk date. Dates like `Jan 4`, `Feb 08`, and `2026-06-09` are supported.
-
-## Quick start
-
-1. Copy the example env file:
-
-```bash
-cp .env.example .env
+```text
+GOOGLE_SHEET_ID=YOUR_SPREADSHEET_ID
 ```
 
-2. Add your Google Sheet CSV export URL to `.env`:
+The ID is the text between `/d/` and `/edit` in the Google Sheet URL.
 
-```bash
-GOOGLE_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=0
-```
-
-To get that URL:
-- Open your Google Sheet
-- Share it as **Anyone with the link can view**
-- Replace `YOUR_SHEET_ID` in the URL above
-- If your data is on a different tab, change `gid=0` to the tab's gid (visible in the sheet URL)
-
-3. Start the server:
+Then run:
 
 ```bash
 python3 server.py
 ```
 
-4. Open [http://127.0.0.1:8080](http://127.0.0.1:8080)
+Open http://127.0.0.1:8080.
 
-Without a sheet URL configured, the app uses `sample-data.csv` so you can preview the dashboard immediately.
+## Render setup
+
+In Render, open the `dog-shelter-walks` service, choose **Environment**, and set:
+
+```text
+GOOGLE_SHEET_ID=YOUR_SPREADSHEET_ID
+```
+
+The tab names default to `Current Dogs` and `Walks`. The server requests both tabs at runtime and caches them for five minutes. Sheet updates do not require another deployment.
 
 ## Configuration
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `GOOGLE_SHEET_CSV_URL` | _(empty)_ | Public CSV export URL for your walk log |
-| `UNDERWALKED_THRESHOLD` | `1` | Dogs with fewer than this many walks in a week are flagged |
-| `PORT` | `8080` | Server port (Render and other hosts set this automatically) |
-| `HOST` | `0.0.0.0` | Bind address. Use `0.0.0.0` for public web hosting |
+| Variable | Default | Purpose |
+|---|---:|---|
+| `GOOGLE_SHEET_ID` | empty | Recommended Google spreadsheet ID |
+| `CURRENT_DOGS_TAB` | Current Dogs | Authoritative roster tab |
+| `WALKS_TAB` | Walks | Walk history tab |
+| `DAILY_PRIORITY_COUNT` | 3 | Number of featured dogs |
+| `DATA_CACHE_SECONDS` | 300 | Server-side data cache |
+| `SHELTER_TIMEZONE` | America/Los_Angeles | Day boundary used for “today” |
+| `PORT` | 8080 | HTTP port |
+| `HOST` | 0.0.0.0 | Bind address |
 
-## Deploy to the web
+Complete CSV URLs can be supplied with `GOOGLE_SHEET_CURRENT_DOGS_CSV_URL` and `GOOGLE_SHEET_WALKS_CSV_URL` instead.
 
-The public deployment is available at **https://dog-shelter-walks.onrender.com/**.
-
-To deploy your own copy with Render:
-
-1. Push this project to a GitHub repository.
-2. In Render, click **New → Blueprint** and connect the repo. Render reads `render.yaml` automatically.
-3. When prompted, set `GOOGLE_SHEET_CSV_URL` to your sheet's CSV export URL.
-4. Click **Apply**. Render builds and deploys the app.
-
-Your Google Sheet must stay shared as **Anyone with the link can view** so the server can read walk data.
-
-**Docker alternative:** build and run anywhere that supports containers:
+## Test
 
 ```bash
-docker build -t dog-shelter-walks .
-docker run -p 8080:8080 \
-  -e GOOGLE_SHEET_CSV_URL="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/export?format=csv&gid=YOUR_GID" \
-  dog-shelter-walks
+python3 -m unittest -v
 ```
 
-Then map port 8080 on your host or platform load balancer.
+## Live app
 
-## How underwalked is calculated
-
-Each walk is counted in the week of its **Date** column (Monday–Sunday). A dog is marked **underwalked** when its walk count for the selected week is below `UNDERWALKED_THRESHOLD`.
-
-With the default threshold of `1`, any dog with **0 walks** in a week is highlighted.
-
-## Project structure
-
-```
-dog-shelter-walks/
-├── server.py          # Web server + Google Sheet fetch
-├── walk_stats.py      # CSV parsing and weekly aggregation
-├── render.yaml        # One-click deploy config for Render
-├── Dockerfile         # Container deploy option
-├── sample-data.csv    # Demo walk log
-├── public/            # Dashboard UI
-│   ├── index.html
-│   ├── app.js
-│   ├── charts.js
-│   └── styles.css
-└── .env.example
-```
-
-## Requirements
-
-- Python 3.9+ (stdlib only — no pip install needed)
+https://dog-shelter-walks.onrender.com/
