@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dog shelter walk dashboard server."""
+"""Small, dependency-free web server for the shelter walk dashboard."""
 
 from __future__ import annotations
 
@@ -7,24 +7,29 @@ import json
 import mimetypes
 import os
 import sys
+import threading
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
-from datetime import date, datetime
+from datetime import datetime
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
-from walk_stats import aggregate_by_week, available_weeks, build_monthly_stats, parse_walk_csv
+from walk_stats import build_dashboard, parse_current_dogs_csv, parse_walk_csv
 
 ROOT = Path(__file__).resolve().parent
 PUBLIC_DIR = ROOT / "public"
 SAMPLE_CSV = ROOT / "sample-data.csv"
+_CACHE: dict[str, tuple[float, str]] = {}
+_CACHE_LOCK = threading.Lock()
 
 
 def load_env_file(path: Path) -> None:
     if not path.exists():
         return
-
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
@@ -33,38 +38,52 @@ def load_env_file(path: Path) -> None:
         os.environ.setdefault(key.strip(), value.strip())
 
 
-def get_config() -> tuple[str | None, int, int, str]:
+def sheet_csv_url(spreadsheet_id: str, tab_name: str) -> str:
+    query = urllib.parse.urlencode({"tqx": "out:csv", "sheet": tab_name})
+    return f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/gviz/tq?{query}"
+
+
+def get_config() -> dict:
     load_env_file(ROOT / ".env")
-    sheet_url = os.environ.get("GOOGLE_SHEET_CSV_URL") or None
-    threshold = int(os.environ.get("UNDERWALKED_THRESHOLD", "1"))
-    port = int(os.environ.get("PORT", "8080"))
-    host = os.environ.get("HOST", "0.0.0.0")
-    return sheet_url, threshold, port, host
-
-
-def fetch_csv(source: str | None) -> str:
-    if source:
-        request = urllib.request.Request(
-            source,
-            headers={"User-Agent": "dog-shelter-walk-dashboard/1.0"},
+    sheet_id = os.environ.get("GOOGLE_SHEET_ID", "").strip()
+    legacy_walk_url = os.environ.get("GOOGLE_SHEET_CSV_URL", "").strip()
+    walks_url = os.environ.get("GOOGLE_SHEET_WALKS_CSV_URL", "").strip()
+    dogs_url = os.environ.get("GOOGLE_SHEET_CURRENT_DOGS_CSV_URL", "").strip()
+    if sheet_id:
+        walks_url = walks_url or sheet_csv_url(sheet_id, os.environ.get("WALKS_TAB", "Walks"))
+        dogs_url = dogs_url or sheet_csv_url(
+            sheet_id, os.environ.get("CURRENT_DOGS_TAB", "Current Dogs")
         )
-        try:
-            with urllib.request.urlopen(request, timeout=20) as response:
-                return response.read().decode("utf-8-sig")
-        except urllib.error.URLError as exc:
-            raise RuntimeError(f"Failed to fetch Google Sheet CSV: {exc}") from exc
+    return {
+        "walks_url": walks_url or legacy_walk_url or None,
+        "dogs_url": dogs_url or None,
+        "priority_count": max(1, int(os.environ.get("DAILY_PRIORITY_COUNT", "3"))),
+        "cache_seconds": max(0, int(os.environ.get("DATA_CACHE_SECONDS", "300"))),
+        "timezone": os.environ.get("SHELTER_TIMEZONE", "America/Los_Angeles"),
+        "port": int(os.environ.get("PORT", "8080")),
+        "host": os.environ.get("HOST", "0.0.0.0"),
+    }
 
-    if SAMPLE_CSV.exists():
-        return SAMPLE_CSV.read_text(encoding="utf-8")
 
-    raise RuntimeError(
-        "No GOOGLE_SHEET_CSV_URL configured and sample-data.csv is missing."
-    )
+def fetch_text(url: str, cache_seconds: int) -> str:
+    now = time.monotonic()
+    with _CACHE_LOCK:
+        cached = _CACHE.get(url)
+        if cached and now - cached[0] < cache_seconds:
+            return cached[1]
+    request = urllib.request.Request(url, headers={"User-Agent": "dog-shelter-walk-dashboard/2.0"})
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            text = response.read().decode("utf-8-sig")
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Could not load the Google Sheet: {exc}") from exc
+    with _CACHE_LOCK:
+        _CACHE[url] = (now, text)
+    return text
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):
-    sheet_url: str | None = None
-    underwalked_threshold: int = 1
+    config: dict = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(PUBLIC_DIR), **kwargs)
@@ -74,52 +93,57 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
-
         if parsed.path == "/api/health":
             self._send_json({"ok": True})
             return
-
-        if parsed.path == "/api/walks":
-            self._handle_walks(parsed)
+        if parsed.path == "/api/dashboard":
+            self._handle_dashboard()
             return
-
         if parsed.path == "/":
             self.path = "/index.html"
-
         return super().do_GET()
 
-    def _handle_walks(self, parsed) -> None:
-        params = parse_qs(parsed.query)
-        week_param = params.get("week", [None])[0]
-
+    def _handle_dashboard(self) -> None:
         try:
-            csv_text = fetch_csv(self.sheet_url)
-            walks = parse_walk_csv(csv_text)
-
-            selected_week = None
-            if week_param:
-                selected_week = datetime.strptime(week_param, "%Y-%m-%d").date()
-
-            payload = aggregate_by_week(
-                walks,
-                week=selected_week,
-                underwalked_threshold=self.underwalked_threshold,
+            walks_url = self.config["walks_url"]
+            dogs_url = self.config["dogs_url"]
+            walks_csv = (
+                fetch_text(walks_url, self.config["cache_seconds"])
+                if walks_url
+                else SAMPLE_CSV.read_text(encoding="utf-8")
             )
-            payload["availableWeeks"] = available_weeks(walks)
-            payload["monthlyStats"] = build_monthly_stats(walks)
-            payload["source"] = "google_sheet" if self.sheet_url else "sample_data"
+            shelter_today = datetime.now(ZoneInfo(self.config["timezone"])).date()
+            walks = parse_walk_csv(walks_csv, reference=shelter_today)
+            if dogs_url:
+                dogs_csv = fetch_text(dogs_url, self.config["cache_seconds"])
+                current_dogs = parse_current_dogs_csv(dogs_csv)
+            else:
+                current_dogs = sorted({walk.dog for walk in walks}, key=str.casefold)
+            payload = build_dashboard(
+                walks,
+                current_dogs,
+                today=shelter_today,
+                priority_count=self.config["priority_count"],
+            )
+            payload["source"] = "google_sheet" if walks_url else "sample_data"
+            payload["currentDogsConfigured"] = bool(dogs_url)
             self._send_json(payload)
-        except Exception as exc:  # noqa: BLE001 - return error to client
+        except Exception as exc:  # noqa: BLE001
             self._send_json({"error": str(exc)}, status=500)
 
     def _send_json(self, payload: dict, status: int = 200) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(body)
+
+    def end_headers(self) -> None:
+        if not self.path.startswith("/api/"):
+            self.send_header("Cache-Control", "public, max-age=3600")
+        super().end_headers()
 
     def guess_type(self, path: str) -> str:
         mime_type, _ = mimetypes.guess_type(path)
@@ -127,25 +151,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
 
 def main() -> None:
-    sheet_url, threshold, port, host = get_config()
-
-    DashboardHandler.sheet_url = sheet_url
-    DashboardHandler.underwalked_threshold = threshold
-
-    server = ThreadingHTTPServer((host, port), DashboardHandler)
-
-    print("Dog Shelter Walk Dashboard")
-    print(f"  URL:        http://{host}:{port}")
-    if host == "0.0.0.0":
-        print(f"  Local URL:  http://127.0.0.1:{port}")
-    print(f"  Data source: {'Google Sheet' if sheet_url else 'sample-data.csv (demo)'}")
-    print(f"  Underwalked threshold: fewer than {threshold} walk(s) per week")
-    print("Press Ctrl+C to stop.")
-
+    config = get_config()
+    DashboardHandler.config = config
+    server = ThreadingHTTPServer((config["host"], config["port"]), DashboardHandler)
+    print(f"Dog Shelter Walk Dashboard: http://{config['host']}:{config['port']}")
+    print(f"Data source: {'Google Sheet' if config['walks_url'] else 'sample data'}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nShutting down.")
         server.server_close()
 
 

@@ -9,7 +9,15 @@ services:
     envVars:
       - key: HOST
         value: 0.0.0.0
-      - key: UNDERWALKED_THRESHOLD
-        value: "1"
-      - key: GOOGLE_SHEET_CSV_URL
+      - key: GOOGLE_SHEET_ID
         sync: false
+      - key: CURRENT_DOGS_TAB
+        value: Current Dogs
+      - key: WALKS_TAB
+        value: Walks
+      - key: DAILY_PRIORITY_COUNT
+        value: "3"
+      - key: DATA_CACHE_SECONDS
+        value: "300"
+      - key: SHELTER_TIMEZONE
+        value: America/Los_Angeles
