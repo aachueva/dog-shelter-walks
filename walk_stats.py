@@ -228,7 +228,15 @@ def build_dashboard(
 
     ranked = sorted(dogs_payload, key=_priority_key)
     eligible = [dog for dog in ranked if not dog["walkedToday"]]
-    priority_keys = {normalize_dog_name(dog["dog"]) for dog in eligible[:priority_count]}
+    initial_priority = eligible[:priority_count]
+    if initial_priority:
+        cutoff_walk_count = initial_priority[-1]["walksLast14Days"]
+        priority_group = [
+            dog for dog in eligible if dog["walksLast14Days"] <= cutoff_walk_count
+        ]
+    else:
+        priority_group = []
+    priority_keys = {normalize_dog_name(dog["dog"]) for dog in priority_group}
     for dog in dogs_payload:
         dog["priority"] = normalize_dog_name(dog["dog"]) in priority_keys
     priority = [dog for dog in ranked if dog["priority"]]
