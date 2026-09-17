@@ -9,7 +9,7 @@ Dogs that only appear in historical data are excluded. New dogs appear immediate
 
 ## How prioritization works
 
-The dashboard features three dogs by default. A dog already walked today is not eligible. The remaining dogs are ranked by:
+The dashboard features at least three dogs by default. It automatically includes any additional dogs tied with the third dog's 14-day walk count, so equally underwalked dogs are never hidden. A dog already walked today is not eligible. The remaining dogs are ranked by:
 
 1. Fewest walks in the trailing 14 days
 2. Longest time since the last recorded walk

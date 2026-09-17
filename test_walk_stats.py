@@ -31,7 +31,10 @@ class WalkStatsTests(unittest.TestCase):
             today=date(2026, 9, 17),
             priority_count=3,
         )
-        self.assertEqual([dog["dog"] for dog in payload["priorityDogs"]], ["Pixie", "Puck", "Duke"])
+        self.assertEqual(
+            [dog["dog"] for dog in payload["priorityDogs"]],
+            ["Pixie", "Puck", "Duke", "Blue"],
+        )
         self.assertNotIn("Former Dog", [dog["dog"] for dog in payload["dogs"]])
         self.assertEqual(payload["summary"]["totalDogs"], 4)
 
@@ -44,6 +47,24 @@ class WalkStatsTests(unittest.TestCase):
         )
         self.assertEqual(payload["priorityDogs"][0]["dog"], "Duke")
         self.assertTrue(next(dog for dog in payload["dogs"] if dog["dog"] == "Blue")["walkedToday"])
+
+    def test_priority_limit_expands_to_include_activity_ties(self):
+        walks = parse_walk_csv(
+            "Dog Name,Date of Walk\n"
+            "Aspen,2026-08-20\n"
+            "Rufus,2026-08-20\n"
+            "Blanca,2026-08-30\n"
+        )
+        payload = build_dashboard(
+            walks,
+            ["Pixie", "Puck", "Aspen", "Rufus", "Blanca"],
+            today=date(2026, 9, 17),
+            priority_count=3,
+        )
+        self.assertEqual(
+            [dog["dog"] for dog in payload["priorityDogs"]],
+            ["Pixie", "Puck", "Aspen", "Rufus", "Blanca"],
+        )
 
 
 if __name__ == "__main__":
