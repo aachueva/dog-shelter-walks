@@ -1,0 +1,27 @@
+name: Keep Sunday dashboard awake
+
+on:
+  schedule:
+    # Sundays, every 10 minutes from 15:00-19:50 UTC.
+    # This covers 8:00am-12:50pm PDT and 7:00am-11:50am PST.
+    - cron: "*/10 15-19 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wake-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Wake Render service
+        run: >-
+          curl
+          --fail
+          --silent
+          --show-error
+          --retry 2
+          --retry-delay 5
+          --max-time 90
+          https://dog-shelter-walks.onrender.com/api/health
