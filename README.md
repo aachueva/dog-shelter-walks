@@ -7,6 +7,8 @@ A fast, phone-first dashboard that tells shelter volunteers which dogs should be
 
 Dogs that only appear in historical data are excluded. New dogs appear immediately even when they have no walk history.
 
+Each dog name links to the optional post-walk Google Form with that dog preselected. Google Forms records its normal response timestamp when feedback is submitted.
+
 ## How prioritization works
 
 The dashboard features at least three dogs by default. It automatically includes any additional dogs tied with the third dog's 14-day walk count, so equally underwalked dogs are never hidden. A dog already walked today is not eligible. The remaining dogs are ranked by:

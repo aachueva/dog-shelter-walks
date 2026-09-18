@@ -1,6 +1,9 @@
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
 const statusBanner = $("status-banner");
+const feedbackFormUrl =
+  "https://docs.google.com/forms/d/e/1FAIpQLSc2a3mFKQ-QTZCuNuaNQ-PxwgZg0BmAa3jrNrV9G1nqiCORXg/viewform?usp=pp_url";
+const feedbackDogField = "entry.1502871618";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: "long",
@@ -26,6 +29,12 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function dogFeedbackUrl(dogName) {
+  const url = new URL(feedbackFormUrl);
+  url.searchParams.set(feedbackDogField, dogName);
+  return url.toString();
+}
+
 function setStatus(message = "", type = "error") {
   statusBanner.textContent = message;
   statusBanner.className = message ? `status ${type}` : "status hidden";
@@ -41,12 +50,14 @@ function describeLastWalk(dog) {
 function renderPriorityCard(dog, rank) {
   const article = document.createElement("article");
   article.className = "priority-card";
+  const feedbackUrl = escapeHtml(dogFeedbackUrl(dog.dog));
   article.innerHTML = `
     <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
     <div>
-      <h3>${escapeHtml(dog.dog)}</h3>
+      <h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3>
       <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
       <p class="recent-count">${dog.walksLast14Days} walk${dog.walksLast14Days === 1 ? "" : "s"} in 14 days</p>
+      <a class="feedback-action" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
   `;
   return article;
@@ -55,11 +66,13 @@ function renderPriorityCard(dog, rank) {
 function renderDogRow(dog) {
   const article = document.createElement("article");
   article.className = `dog-row ${dog.walkedToday ? "walked" : ""}`;
+  const feedbackUrl = escapeHtml(dogFeedbackUrl(dog.dog));
   article.innerHTML = `
     <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
     <div class="dog-main">
-      <h3>${escapeHtml(dog.dog)}</h3>
+      <h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3>
       <p>${escapeHtml(describeLastWalk(dog))}</p>
+      <a class="feedback-action compact" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
     <div class="dog-total">
       <strong>${dog.walksLast14Days}</strong>
