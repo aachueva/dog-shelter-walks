@@ -145,22 +145,15 @@ function evaluateDog(dog) {
   if (Number(dog.weight) > maxWeight) return null;
 
   if (answers.age !== "any") {
-    if (ageGroup(dog.age) === answers.age) {
-      score += 12;
-      reasons.push(`Age fits your preference (${dog.age.toLowerCase()})`);
-    } else {
-      considerations.push(`Age is ${dog.age.toLowerCase()}, outside your preferred range`);
-    }
+    if (ageGroup(dog.age) !== answers.age) return null;
+    score += 12;
+    reasons.push(`Age fits your preference (${dog.age.toLowerCase()})`);
   }
 
   if (answers.sex !== "any") {
-    if (dog.gender.toLowerCase() === answers.sex) {
-      score += 10;
-      reasons.push(`${dog.gender} dog, matching your preference`);
-    } else {
-      score -= 5;
-      considerations.push(`${dog.gender} dog; you indicated a preference for a ${answers.sex} dog`);
-    }
+    if (dog.gender.toLowerCase() !== answers.sex) return null;
+    score += 10;
+    reasons.push(`${dog.gender} dog, matching your preference`);
   }
 
   if (["dogs", "dogs-cats"].includes(answers.pets)) {
@@ -273,7 +266,7 @@ function matchCard(result, index) {
         <div><h4>Why ${dog.name} may fit</h4><ul>${reasonItems.map((item) => `<li>${item}</li>`).join("")}</ul></div>
         <div><h4>Confirm with NorSled</h4><ul>${considerations.map((item) => `<li>${item}</li>`).join("")}</ul></div>
       </div>
-      <a class="profile-link" href="${dog.profileUrl}" target="_blank" rel="noopener">View ${dog.name}’s profile&nbsp; ↗</a>
+      <a class="profile-link" href="/dog.html?id=${encodeURIComponent(dog.id)}">View ${dog.name}’s profile&nbsp; →</a>
     </div>`;
   return article;
 }
