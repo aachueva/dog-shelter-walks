@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
 const statusBanner = $("status-banner");
+const dashboardCacheKey = "dog-shelter-walks:dashboard:v1";
 const feedbackFormUrl =
   "https://docs.google.com/forms/d/e/1FAIpQLSc2a3mFKQ-QTZCuNuaNQ-PxwgZg0BmAa3jrNrV9G1nqiCORXg/viewform?usp=pp_url";
 const feedbackDogField = "entry.1502871618";
@@ -38,6 +39,23 @@ function dogFeedbackUrl(dogName) {
 function setStatus(message = "", type = "error") {
   statusBanner.textContent = message;
   statusBanner.className = message ? `status ${type}` : "status hidden";
+}
+
+function readCachedDashboard() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(dashboardCacheKey));
+    return cached?.data?.today && Array.isArray(cached.data.dogs) ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDashboard(data) {
+  try {
+    localStorage.setItem(dashboardCacheKey, JSON.stringify({ savedAt: new Date().toISOString(), data }));
+  } catch {
+    // The live dashboard still works if browser storage is unavailable or full.
+  }
 }
 
 function describeLastWalk(dog) {
@@ -127,7 +145,7 @@ function renderHeatmap(data) {
   container.appendChild(grid);
 }
 
-function render(data) {
+function render(data, { cached = false } = {}) {
   $("today-label").textContent = dateFormatter.format(parseDate(data.today));
   $("walks-today").textContent = data.summary.walksToday;
   $("walked-today").textContent = `${data.summary.walkedToday}/${data.summary.totalDogs}`;
@@ -149,12 +167,15 @@ function render(data) {
   data.otherDogs.forEach((dog) => otherList.appendChild(renderDogRow(dog)));
   renderHeatmap(data);
 
-  $("last-updated").textContent = `Updated ${new Intl.DateTimeFormat(undefined, {
+  $("last-updated").textContent = `${cached ? "Saved data from" : "Updated"} ${new Intl.DateTimeFormat(undefined, {
+    ...(cached ? { month: "short", day: "numeric" } : {}),
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(data.updatedAt))}`;
 
-  if (!data.currentDogsConfigured) {
+  if (cached) {
+    setStatus("Showing the last saved dashboard while checking for updates…", "info");
+  } else if (!data.currentDogsConfigured) {
     setStatus("Connect the Current Dogs tab so newly arrived dogs with no walk history appear.", "info");
   } else if (data.source === "sample_data") {
     setStatus("Showing sample data. Connect the Google Sheet in Render to go live.", "info");
@@ -163,21 +184,33 @@ function render(data) {
   }
 }
 
-async function loadDashboard() {
+async function loadDashboard({ hasCachedData = false } = {}) {
   refreshBtn.disabled = true;
-  refreshBtn.textContent = "Loading…";
+  refreshBtn.textContent = hasCachedData ? "Updating…" : "Loading…";
   try {
     const response = await fetch("/api/dashboard", { cache: "no-store" });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Could not load walk data.");
+    saveDashboard(data);
     render(data);
   } catch (error) {
-    setStatus(error.message || "Could not load walk data. Please try again.");
+    if (hasCachedData) {
+      setStatus("Showing saved data. Could not check for updates—tap Refresh to try again.", "info");
+    } else {
+      setStatus(error.message || "Could not load walk data. Please try again.");
+    }
   } finally {
     refreshBtn.disabled = false;
     refreshBtn.textContent = "Refresh";
   }
 }
 
-refreshBtn.addEventListener("click", loadDashboard);
-loadDashboard();
+refreshBtn.addEventListener("click", () => loadDashboard({ hasCachedData: Boolean(readCachedDashboard()) }));
+
+const cachedDashboard = readCachedDashboard();
+if (cachedDashboard) render(cachedDashboard.data, { cached: true });
+loadDashboard({ hasCachedData: Boolean(cachedDashboard) });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
