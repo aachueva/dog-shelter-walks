@@ -7,10 +7,10 @@ on:
     - cron: "*/10 15-19 * * 0"
     # One-time evening window through 11:00pm PDT on September 17, 2026.
     - cron: "*/10 1-5 18 9 *"
-    # Keep the service awake all day on September 18, 2026 (Pacific time).
-    # Midnight-4:50pm PDT falls on September 18 UTC; 5:00-11:50pm falls on September 19 UTC.
-    - cron: "*/10 7-23 18 9 *"
-    - cron: "*/10 0-6 19 9 *"
+    # Keep the service awake all day on September 19, 2026 (Pacific time).
+    # Midnight-4:50pm PDT falls on September 19 UTC; 5:00-11:50pm falls on September 20 UTC.
+    - cron: "*/10 7-23 19 9 *"
+    - cron: "*/10 0-6 20 9 *"
   workflow_dispatch:
 
 permissions:
@@ -29,8 +29,8 @@ jobs:
             exit 0
           fi
 
-          if { [ "$EVENT_SCHEDULE" = "*/10 7-23 18 9 *" ] || [ "$EVENT_SCHEDULE" = "*/10 0-6 19 9 *" ]; } \
-            && [ "$(TZ=America/Los_Angeles date +%F)" != "2026-09-18" ]; then
+          if { [ "$EVENT_SCHEDULE" = "*/10 7-23 19 9 *" ] || [ "$EVENT_SCHEDULE" = "*/10 0-6 20 9 *" ]; } \
+            && [ "$(TZ=America/Los_Angeles date +%F)" != "2026-09-19" ]; then
             exit 0
           fi
 
