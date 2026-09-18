@@ -49,6 +49,30 @@ const questions = [
     ],
   },
   {
+    id: "age",
+    kicker: "Dog age",
+    title: "What age dog would you prefer?",
+    help: "This is a preference, not a strict filter. Age and energy level do not always match exactly.",
+    options: [
+      ["any", "No preference", "I’m open to dogs of any age"],
+      ["puppy", "Puppy", "Under 1 year old"],
+      ["young", "Young adult", "About 1–3 years old"],
+      ["adult", "Adult", "About 4–7 years old"],
+      ["senior", "Senior", "About 8 years or older"],
+    ],
+  },
+  {
+    id: "sex",
+    kicker: "Dog sex",
+    title: "Do you have a preference for the dog’s sex?",
+    help: "Choose no preference if either a male or female dog could be a good fit.",
+    options: [
+      ["any", "No preference", "Either male or female"],
+      ["female", "Female", "I would prefer a female dog"],
+      ["male", "Male", "I would prefer a male dog"],
+    ],
+  },
+  {
     id: "home",
     kicker: "Your home",
     title: "What outdoor setup do you have?",
@@ -101,6 +125,16 @@ function dogFacts(dog) {
   };
 }
 
+function ageGroup(ageText) {
+  const years = Number(ageText.match(/(\d+)\s+Year/i)?.[1] || 0);
+  const months = Number(ageText.match(/(\d+)\s+Month/i)?.[1] || 0);
+  const ageInYears = years + (months / 12);
+  if (ageInYears < 1) return "puppy";
+  if (ageInYears < 4) return "young";
+  if (ageInYears < 8) return "adult";
+  return "senior";
+}
+
 function evaluateDog(dog) {
   const facts = dogFacts(dog);
   let score = 50;
@@ -109,6 +143,25 @@ function evaluateDog(dog) {
 
   const maxWeight = answers.weight === "none" ? Infinity : Number(answers.weight);
   if (Number(dog.weight) > maxWeight) return null;
+
+  if (answers.age !== "any") {
+    if (ageGroup(dog.age) === answers.age) {
+      score += 12;
+      reasons.push(`Age fits your preference (${dog.age.toLowerCase()})`);
+    } else {
+      considerations.push(`Age is ${dog.age.toLowerCase()}, outside your preferred range`);
+    }
+  }
+
+  if (answers.sex !== "any") {
+    if (dog.gender.toLowerCase() === answers.sex) {
+      score += 10;
+      reasons.push(`${dog.gender} dog, matching your preference`);
+    } else {
+      score -= 5;
+      considerations.push(`${dog.gender} dog; you indicated a preference for a ${answers.sex} dog`);
+    }
+  }
 
   if (["dogs", "dogs-cats"].includes(answers.pets)) {
     if (facts.dogs) { score += 14; reasons.push("Profile indicates compatibility with other dogs"); }
