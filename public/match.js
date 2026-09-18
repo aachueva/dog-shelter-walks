@@ -99,6 +99,7 @@ const questions = [
 let dogs = [];
 let currentQuestion = 0;
 const answers = {};
+const savedMatchKey = "norsled-adoption-match";
 
 function traitIncludes(dog, phrase) {
   return dog.traits.some((trait) => trait.toLowerCase().includes(phrase.toLowerCase()));
@@ -266,12 +267,14 @@ function matchCard(result, index) {
         <div><h4>Why ${dog.name} may fit</h4><ul>${reasonItems.map((item) => `<li>${item}</li>`).join("")}</ul></div>
         <div><h4>Confirm with NorSled</h4><ul>${considerations.map((item) => `<li>${item}</li>`).join("")}</ul></div>
       </div>
-      <a class="profile-link" href="/dog.html?id=${encodeURIComponent(dog.id)}">View ${dog.name}’s profile&nbsp; →</a>
+      <a class="profile-link" href="/dog.html?id=${encodeURIComponent(dog.id)}&from=matches">View ${dog.name}’s profile&nbsp; →</a>
     </div>`;
   return article;
 }
 
 function showResults() {
+  sessionStorage.setItem(savedMatchKey, JSON.stringify(answers));
+  history.replaceState(null, "", "/match.html#results");
   $("matcher").classList.add("hidden");
   $("results").classList.remove("hidden");
   const notice = $("policy-notice");
@@ -299,6 +302,8 @@ function showResults() {
 }
 
 function restart() {
+  sessionStorage.removeItem(savedMatchKey);
+  history.replaceState(null, "", "/match.html");
   Object.keys(answers).forEach((key) => delete answers[key]);
   currentQuestion = 0;
   $("results").classList.add("hidden");
@@ -325,7 +330,21 @@ fetch("/adoption-dogs.json", { cache: "no-store" })
     if (!response.ok) throw new Error("Could not load dog profiles.");
     return response.json();
   })
-  .then((data) => { dogs = data; })
+  .then((data) => {
+    dogs = data;
+    if (window.location.hash === "#results") {
+      try {
+        const savedAnswers = JSON.parse(sessionStorage.getItem(savedMatchKey));
+        if (savedAnswers && questions.every((question) => savedAnswers[question.id])) {
+          Object.assign(answers, savedAnswers);
+          $("intro").classList.add("hidden");
+          showResults();
+        }
+      } catch {
+        sessionStorage.removeItem(savedMatchKey);
+      }
+    }
+  })
   .catch(() => {
     $("start-btn").disabled = true;
     $("start-btn").textContent = "Profiles temporarily unavailable";
