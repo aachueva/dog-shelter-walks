@@ -1,5 +1,15 @@
-const shellCache = "dog-shelter-walks-shell-v2";
-const shellFiles = ["/", "/styles.css?v=20260918-2", "/app.js?v=20260918-2"];
+const shellCache = "dog-shelter-walks-shell-v3";
+const shellFiles = [
+  "/",
+  "/styles.css?v=20260918-2",
+  "/app.js?v=20260918-2",
+  "/match.html",
+  "/match.css?v=20260918-3",
+  "/match.js?v=20260918-3",
+  "/dog.html",
+  "/dog.js?v=20260918-1",
+  "/adoption-dogs.json",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(shellCache).then((cache) => cache.addAll(shellFiles)));
@@ -20,14 +30,32 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
 
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then(async (response) => {
+          if (response.ok) {
+            const cache = await caches.open(shellCache);
+            await cache.put(request, response.clone());
+          }
+          return response;
+        })
+        .catch(async () => (
+          (await caches.match(request))
+          || (await caches.match(url.pathname))
+          || (await caches.match("/"))
+        )),
+    );
+    return;
+  }
+
   event.respondWith(
-    caches.match(request.mode === "navigate" ? "/" : request).then((cached) => {
+    caches.match(request).then((cached) => {
       const update = fetch(request)
         .then(async (response) => {
           if (response.ok) {
-            const cacheKey = request.mode === "navigate" ? "/" : request;
             const cache = await caches.open(shellCache);
-            await cache.put(cacheKey, response.clone());
+            await cache.put(request, response.clone());
           }
           return response;
         })
