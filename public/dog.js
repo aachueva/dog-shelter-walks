@@ -30,7 +30,9 @@ function renderDog(dog) {
 
   const actions = element("div", "profile-actions");
   const back = element("a", "secondary-link", "← Back to matches");
-  back.href = "/match.html";
+  back.href = new URLSearchParams(window.location.search).get("from") === "matches"
+    ? "/match.html#results"
+    : "/match.html";
   const norsled = element("a", "profile-link", "View all available dogs on NorSled ↗");
   norsled.href = "https://www.norsled.org/adoption-process-copy";
   norsled.target = "_blank";
