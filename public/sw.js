@@ -1,14 +1,15 @@
-const shellCache = "dog-shelter-walks-shell-v5";
+const shellCache = "dog-shelter-walks-shell-v6";
 const shellFiles = [
-  "/",
-  "/styles.css?v=20260918-2",
-  "/app.js?v=20260918-2",
-  "/match.html",
-  "/match.css?v=20260918-4",
-  "/match.js?v=20260918-5",
-  "/dog.html",
-  "/dog.js?v=20260918-2",
-  "/adoption-dogs.json",
+  "./",
+  "./styles.css?v=20260921-1",
+  "./app.js?v=20260921-1",
+  "./dashboard-data.mjs",
+  "./match.html",
+  "./match.css?v=20260918-4",
+  "./match.js?v=20260918-5",
+  "./dog.html",
+  "./dog.js?v=20260918-2",
+  "./adoption-dogs.json",
 ];
 
 self.addEventListener("install", (event) => {
@@ -43,7 +44,7 @@ self.addEventListener("fetch", (event) => {
         .catch(async () => (
           (await caches.match(request))
           || (await caches.match(url.pathname))
-          || (await caches.match("/"))
+          || (await caches.match("./"))
         )),
     );
     return;

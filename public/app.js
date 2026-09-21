@@ -1,3 +1,5 @@
+import { loadLiveDashboard } from "./dashboard-data.mjs";
+
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
 const statusBanner = $("status-banner");
@@ -188,9 +190,7 @@ async function loadDashboard({ hasCachedData = false } = {}) {
   refreshBtn.disabled = true;
   refreshBtn.textContent = hasCachedData ? "Updating…" : "Loading…";
   try {
-    const response = await fetch("/api/dashboard", { cache: "no-store" });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Could not load walk data.");
+    const data = await loadLiveDashboard();
     saveDashboard(data);
     render(data);
   } catch (error) {
@@ -212,5 +212,5 @@ if (cachedDashboard) render(cachedDashboard.data, { cached: true });
 loadDashboard({ hasCachedData: Boolean(cachedDashboard) });
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 }

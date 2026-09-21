@@ -43,7 +43,7 @@ function renderDog(dog) {
   profile.appendChild(hero);
 }
 
-fetch("/adoption-dogs.json", { cache: "no-store" })
+fetch("./adoption-dogs.json", { cache: "no-store" })
   .then((response) => {
     if (!response.ok) throw new Error("Could not load dog profiles.");
     return response.json();
@@ -54,5 +54,5 @@ fetch("/adoption-dogs.json", { cache: "no-store" })
     renderDog(dog);
   })
   .catch(() => {
-    profile.innerHTML = '<div class="profile-status"><h2>Profile unavailable</h2><p>This dog may no longer be in the current profile list.</p><a class="secondary-link" href="/match.html">Back to matches</a></div>';
+    profile.innerHTML = '<div class="profile-status"><h2>Profile unavailable</h2><p>This dog may no longer be in the current profile list.</p><a class="secondary-link" href="./match.html">Back to matches</a></div>';
   });

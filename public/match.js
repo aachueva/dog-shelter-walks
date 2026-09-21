@@ -267,7 +267,7 @@ function matchCard(result, index) {
         <div><h4>Why ${dog.name} may fit</h4><ul>${reasonItems.map((item) => `<li>${item}</li>`).join("")}</ul></div>
         <div><h4>Confirm with NorSled</h4><ul>${considerations.map((item) => `<li>${item}</li>`).join("")}</ul></div>
       </div>
-      <a class="profile-link" href="/dog.html?id=${encodeURIComponent(dog.id)}&from=matches">View ${dog.name}’s profile&nbsp; →</a>
+      <a class="profile-link" href="./dog.html?id=${encodeURIComponent(dog.id)}&from=matches">View ${dog.name}’s profile&nbsp; →</a>
     </div>`;
   return article;
 }
@@ -325,7 +325,7 @@ $("next-btn").addEventListener("click", () => {
 });
 $("restart-btn").addEventListener("click", restart);
 
-fetch("/adoption-dogs.json", { cache: "no-store" })
+fetch("./adoption-dogs.json", { cache: "no-store" })
   .then((response) => {
     if (!response.ok) throw new Error("Could not load dog profiles.");
     return response.json();
