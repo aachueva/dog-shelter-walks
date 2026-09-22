@@ -1,6 +1,6 @@
 # Dog Shelter Walk Dashboard
 
-A fast, phone-first dashboard that tells shelter volunteers which dogs should be walked next. It reads two tabs from one public Google Sheet:
+A fast, phone-first dashboard that tells shelter volunteers which dogs should be walked next. Walk history comes from Google Sheets. The current roster can come from either a Google Sheet tab or NorSled's private SharePoint workbook.
 
 - **Current Dogs** is the authoritative shelter roster.
 - **Walks** stores each dog's walk dates across the row.
@@ -67,7 +67,20 @@ In Render, open the `dog-shelter-walks` service, choose **Environment**, and set
 GOOGLE_SHEET_ID=YOUR_SPREADSHEET_ID
 ```
 
-The tab names default to `Current Dogs` and `Walks`. The server requests both tabs at runtime and caches them for five minutes. Sheet updates do not require another deployment.
+The tab names default to `Current Dogs` and `Walks`. The server requests live data at runtime and caches it for five minutes. Pressing **Refresh** bypasses that cache, so saved spreadsheet changes appear immediately without another deployment.
+
+### Private SharePoint roster
+
+Set the variables below to use `Dogs in Rescue.xlsx` as the authoritative roster. The server reads the workbook through Microsoft Graph, keeps Microsoft credentials off volunteers' phones, filters `Location` to `dog over breed`/`DOB`, and reads names from `Dog Name/Tag Number`.
+
+```text
+SHAREPOINT_ROSTER_URL=https://...sharepoint.com/:x:/s/...
+MICROSOFT_TENANT_ID=...
+MICROSOFT_CLIENT_ID=...
+MICROSOFT_CLIENT_SECRET=...
+```
+
+The Microsoft Entra application needs permission to read the SharePoint file. Prefer site-scoped access over tenant-wide file access.
 
 ## Configuration
 
@@ -75,6 +88,10 @@ The tab names default to `Current Dogs` and `Walks`. The server requests both ta
 |---|---:|---|
 | `GOOGLE_SHEET_ID` | empty | Recommended Google spreadsheet ID |
 | `CURRENT_DOGS_TAB` | Current Dogs | Authoritative roster tab |
+| `SHAREPOINT_ROSTER_URL` | empty | Private Excel roster share URL; takes precedence over Current Dogs |
+| `MICROSOFT_TENANT_ID` | empty | Microsoft Entra tenant ID |
+| `MICROSOFT_CLIENT_ID` | empty | Microsoft Entra application ID |
+| `MICROSOFT_CLIENT_SECRET` | empty | Microsoft Entra application secret |
 | `WALKS_TAB` | Walks | Walk history tab |
 | `DAILY_PRIORITY_COUNT` | 3 | Number of featured dogs |
 | `DATA_CACHE_SECONDS` | 300 | Server-side data cache |

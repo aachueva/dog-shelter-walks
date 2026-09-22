@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import csv
 import io
+import re
+import zipfile
+import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -177,6 +180,99 @@ def parse_current_dogs_csv(csv_text: str) -> list[str]:
         dog = display_dog_name(row[0])
         key = normalize_dog_name(dog)
         if not key or key in COLUMN_ALIASES["dog"] or key in seen:
+            continue
+        seen.add(key)
+        dogs.append(dog)
+    return dogs
+
+
+def _clean_roster_dog_name(value: str) -> str:
+    """Remove the trailing NorSled tag number while preserving the roster name."""
+    return display_dog_name(re.sub(r"\s+\d{6}\s*$", "", value))
+
+
+def _is_dob_location(value: str) -> bool:
+    normalized = _normalize_header(value)
+    return normalized == "dob" or normalized.startswith("dob ") or "dog over breed" in normalized
+
+
+def parse_current_dogs_xlsx(xlsx_bytes: bytes) -> list[str]:
+    """Read Dog Name/Location columns from NorSled's Excel roster."""
+    namespaces = {
+        "main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
+        "rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        "pkg": "http://schemas.openxmlformats.org/package/2006/relationships",
+    }
+    with zipfile.ZipFile(io.BytesIO(xlsx_bytes)) as archive:
+        shared_strings: list[str] = []
+        if "xl/sharedStrings.xml" in archive.namelist():
+            root = ET.fromstring(archive.read("xl/sharedStrings.xml"))
+            for item in root.findall("main:si", namespaces):
+                shared_strings.append("".join(node.text or "" for node in item.iterfind(".//main:t", namespaces)))
+
+        workbook_root = ET.fromstring(archive.read("xl/workbook.xml"))
+        rels_root = ET.fromstring(archive.read("xl/_rels/workbook.xml.rels"))
+        rel_targets = {
+            rel.attrib["Id"]: rel.attrib["Target"]
+            for rel in rels_root.findall("pkg:Relationship", namespaces)
+        }
+        sheet_rows: list[list[dict[str, str]]] = []
+        for sheet in workbook_root.findall("main:sheets/main:sheet", namespaces):
+            relationship_id = sheet.attrib[f"{{{namespaces['rel']}}}id"]
+            target = rel_targets[relationship_id].lstrip("/")
+            sheet_path = target if target.startswith("xl/") else f"xl/{target}"
+            sheet_root = ET.fromstring(archive.read(sheet_path))
+            rows: list[dict[str, str]] = []
+            for row in sheet_root.findall(".//main:sheetData/main:row", namespaces):
+                values: dict[str, str] = {}
+                for cell in row.findall("main:c", namespaces):
+                    column = re.match(r"[A-Z]+", cell.attrib.get("r", ""))
+                    if not column:
+                        continue
+                    cell_type = cell.attrib.get("t")
+                    value_node = cell.find("main:v", namespaces)
+                    if cell_type == "inlineStr":
+                        value = "".join(node.text or "" for node in cell.iterfind(".//main:t", namespaces))
+                    elif value_node is None:
+                        value = ""
+                    elif cell_type == "s":
+                        index = int(value_node.text or "0")
+                        value = shared_strings[index] if index < len(shared_strings) else ""
+                    else:
+                        value = value_node.text or ""
+                    values[column.group(0)] = value
+                rows.append(values)
+            sheet_rows.append(rows)
+
+    header_index = None
+    dog_column = None
+    location_column = None
+    roster_rows: list[dict[str, str]] = []
+    for rows in sheet_rows:
+        for index, row in enumerate(rows):
+            for column, value in row.items():
+                normalized = _normalize_header(value)
+                if normalized in {"dog name", "dog name/tag number", "dog name tag number"}:
+                    dog_column = column
+                elif normalized == "location":
+                    location_column = column
+            if dog_column and location_column:
+                header_index = index
+                roster_rows = rows
+                break
+        if header_index is not None:
+            break
+    if header_index is None or not dog_column or not location_column:
+        raise ValueError("Missing required Excel columns: Dog Name and Location")
+
+    dogs: list[str] = []
+    seen: set[str] = set()
+    for row in roster_rows[header_index + 1 :]:
+        if not _is_dob_location(row.get(location_column, "")):
+            continue
+        dog = _clean_roster_dog_name(row.get(dog_column, ""))
+        key = normalize_dog_name(dog)
+        if not key or key in seen:
             continue
         seen.add(key)
         dogs.append(dog)

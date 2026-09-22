@@ -1,9 +1,9 @@
-const shellCache = "dog-shelter-walks-shell-v6";
+const shellCache = "dog-shelter-walks-shell-v7";
 const shellFiles = [
   "./",
   "./styles.css?v=20260921-1",
-  "./app.js?v=20260921-1",
-  "./dashboard-data.mjs",
+  "./app.js?v=20260922-1",
+  "./dashboard-data.mjs?v=20260922-1",
   "./match.html",
   "./match.css?v=20260918-4",
   "./match.js?v=20260918-5",

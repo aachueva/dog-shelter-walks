@@ -13,6 +13,14 @@ services:
         sync: false
       - key: CURRENT_DOGS_TAB
         value: Current Dogs
+      - key: SHAREPOINT_ROSTER_URL
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
       - key: WALKS_TAB
         value: Walks
       - key: DAILY_PRIORITY_COUNT

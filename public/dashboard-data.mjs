@@ -2,6 +2,7 @@ const SHEET_ID = "1jNjmPRSR7_QBQnX3O24o7ckEBKpl_jdLepSK4X5Z0Hk";
 const SHELTER_TIMEZONE = "America/Los_Angeles";
 const HISTORY_DAYS = 14;
 const PRIORITY_COUNT = 3;
+const ROSTER_API = "https://dog-shelter-walks.onrender.com/api/roster";
 
 function normalizeDogName(value) {
   return String(value || "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
@@ -169,10 +170,28 @@ function loadGvizTable(sheetName) {
   });
 }
 
-export async function loadLiveDashboard() {
-  const [dogsTable, walksTable] = await Promise.all([
+async function loadPrivateRoster({ forceRefresh = false } = {}) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), forceRefresh ? 60000 : 2500);
+  try {
+    const url = forceRefresh ? `${ROSTER_API}?refresh=1` : ROSTER_API;
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    const payload = await response.json();
+    if (!response.ok || !Array.isArray(payload.dogs)) {
+      throw new Error(payload.error || "Could not load the SharePoint roster.");
+    }
+    return payload.dogs;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+export async function loadLiveDashboard({ forceRefresh = false } = {}) {
+  const [dogsTable, walksTable, privateRoster] = await Promise.all([
     loadGvizTable("Current Dogs"),
     loadGvizTable("Walks"),
+    loadPrivateRoster({ forceRefresh }).catch(() => null),
   ]);
-  return buildDashboard(parseWalks(walksTable), parseCurrentDogs(dogsTable));
+  const currentDogs = privateRoster?.length ? privateRoster : parseCurrentDogs(dogsTable);
+  return buildDashboard(parseWalks(walksTable), currentDogs);
 }

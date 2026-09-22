@@ -1,4 +1,4 @@
-import { loadLiveDashboard } from "./dashboard-data.mjs";
+import { loadLiveDashboard } from "./dashboard-data.mjs?v=20260922-1";
 
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
@@ -186,11 +186,11 @@ function render(data, { cached = false } = {}) {
   }
 }
 
-async function loadDashboard({ hasCachedData = false } = {}) {
+async function loadDashboard({ hasCachedData = false, forceRefresh = false } = {}) {
   refreshBtn.disabled = true;
   refreshBtn.textContent = hasCachedData ? "Updating…" : "Loading…";
   try {
-    const data = await loadLiveDashboard();
+    const data = await loadLiveDashboard({ forceRefresh });
     saveDashboard(data);
     render(data);
   } catch (error) {
@@ -205,7 +205,9 @@ async function loadDashboard({ hasCachedData = false } = {}) {
   }
 }
 
-refreshBtn.addEventListener("click", () => loadDashboard({ hasCachedData: Boolean(readCachedDashboard()) }));
+refreshBtn.addEventListener("click", () =>
+  loadDashboard({ hasCachedData: Boolean(readCachedDashboard()), forceRefresh: true })
+);
 
 const cachedDashboard = readCachedDashboard();
 if (cachedDashboard) render(cachedDashboard.data, { cached: true });
