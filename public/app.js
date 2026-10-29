@@ -69,7 +69,7 @@ function describeLastWalk(dog) {
 
 function renderPriorityCard(dog, rank) {
   const article = document.createElement("article");
-  article.className = "priority-card";
+  article.className = `priority-card ${dog.walksLast14Days === 0 ? "zero-walks" : ""}`;
   const feedbackUrl = escapeHtml(dogFeedbackUrl(dog.dog));
   article.innerHTML = `
     <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
@@ -85,7 +85,7 @@ function renderPriorityCard(dog, rank) {
 
 function renderDogRow(dog) {
   const article = document.createElement("article");
-  article.className = `dog-row ${dog.walkedToday ? "walked" : ""}`;
+  article.className = `dog-row ${dog.walkedToday ? "walked" : ""} ${dog.walksLast14Days === 0 ? "zero-walks" : ""}`;
   const feedbackUrl = escapeHtml(dogFeedbackUrl(dog.dog));
   article.innerHTML = `
     <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
