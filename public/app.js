@@ -1,4 +1,4 @@
-import { dogPhotoUrl } from "./dog-photos.mjs";
+import { dogPhotoUrl } from "./dog-photos.mjs?v=20261102-local";
 import { loadLiveDashboard } from "./dashboard-data.mjs?v=20260922-1";
 
 const $ = (id) => document.getElementById(id);
