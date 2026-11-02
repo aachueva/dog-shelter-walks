@@ -1,3 +1,4 @@
+import { dogPhotoUrl } from "./dog-photos.mjs";
 import { loadLiveDashboard } from "./dashboard-data.mjs?v=20260922-1";
 
 const $ = (id) => document.getElementById(id);
@@ -67,6 +68,13 @@ function describeLastWalk(dog) {
   return `Last walked ${dog.daysSinceWalk} days ago`;
 }
 
+function dogAvatar(name) {
+  const url = dogPhotoUrl(name);
+  const fallback = '<span class="dog-avatar-fallback" aria-hidden="true">🐾</span>';
+  if (!url) return '<span class="dog-avatar">' + fallback + '</span>';
+  return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
+}
+
 function renderPriorityCard(dog, rank) {
   const article = document.createElement("article");
   article.className = `priority-card ${dog.walksLast14Days === 0 ? "zero-walks" : ""}`;
@@ -74,7 +82,7 @@ function renderPriorityCard(dog, rank) {
   article.innerHTML = `
     <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
     <div>
-      <h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3>
+      <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
       <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
       <p class="recent-count">${dog.walksLast14Days} walk${dog.walksLast14Days === 1 ? "" : "s"} in 14 days</p>
       <a class="feedback-action" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
@@ -133,7 +141,7 @@ function renderHeatmap(data) {
   data.dogs.forEach((dog) => {
     const label = document.createElement("div");
     label.className = `heat-dog ${dog.priority ? "priority" : ""}`;
-    label.textContent = dog.dog;
+    label.innerHTML = `${dogAvatar(dog.dog)}<span>${escapeHtml(dog.dog)}</span>`;
     grid.appendChild(label);
     data.dates.forEach((isoDate) => {
       const count = dog.dailyCounts[isoDate] || 0;
