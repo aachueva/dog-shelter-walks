@@ -98,7 +98,7 @@ function renderDogRow(dog) {
   article.innerHTML = `
     <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
     <div class="dog-main">
-      <h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3>
+      <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
       <p>${escapeHtml(describeLastWalk(dog))}</p>
       <a class="feedback-action compact" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
