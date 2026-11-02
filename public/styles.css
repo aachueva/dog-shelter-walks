@@ -280,3 +280,15 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
 }
+
+/* Dog identification photos */
+.dog-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.dog-identity h3 { min-width: 0; overflow-wrap: anywhere; }
+.dog-avatar { display: inline-grid; place-items: center; flex: 0 0 46px; width: 46px; height: 46px; overflow: hidden; border-radius: 50%; background: #e4eee5; border: 2px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.12); text-decoration: none; }
+.dog-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.dog-avatar-fallback { font-size: 22px; line-height: 1; }
+.dog-avatar-link:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.heat-dog { gap: 6px; }
+.heat-dog .dog-avatar { flex-basis: 25px; width: 25px; height: 25px; border-width: 1px; }
+.heat-dog .dog-avatar-fallback { font-size: 13px; }
+.heat-dog > span:last-child { overflow: hidden; text-overflow: ellipsis; }
