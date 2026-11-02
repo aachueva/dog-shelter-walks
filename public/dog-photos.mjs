@@ -14,11 +14,15 @@ export const DOG_PHOTOS = {
   "Tonto": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/tonto.png",
 };
 
+function normalizeDogName(name) {
+  return String(name ?? "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 export function dogPhotoUrl(name) {
-  const key = String(name ?? "").trim().replace(/\s+/g, " ").toLowerCase();
-  const match = Object.entries(DOG_PHOTOS).find(([dog]) => dog.trim().replace(/\s+/g, " ").toLowerCase() === key);
-  const url = match?.[1];
-  if (!url) return null;
-  try { const parsed = new URL(url, import.meta.url); return ["https:", "http:"].includes(parsed.protocol) ? parsed.href : null; }
-  catch { return null; }
+  const key = normalizeDogName(name);
+  const entry = Object.entries(DOG_PHOTOS).find(([dog]) => normalizeDogName(dog) === key);
+  return entry?.[1] || null;
 }
