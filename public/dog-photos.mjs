@@ -2,16 +2,16 @@
 // Only add photos NorSled has authorized for reuse in this public app.
 // Names are matched without regard to capitalization or extra spaces.
 export const DOG_PHOTOS = {
-  "Aspen": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/aspen.png",
-  "Delilah": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/delilah.png",
-  "Duke": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/duke.png",
-  "Klaus": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/klaus.png",
-  "Max": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/max.png",
-  "Pixie": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/pixie.png",
-  "Prissy": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/prissy.png",
-  "Ricky": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/ricky.png",
-  "Snow Cone": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/snowcone.png",
-  "Tonto": "https://raw.githubusercontent.com/aachueva/dog-shelter-walks/main/tonto.png",
+  "Aspen": "./dog-photos/aspen.png",
+  "Delilah": "./dog-photos/delilah.png",
+  "Duke": "./dog-photos/duke.png",
+  "Klaus": "./dog-photos/klaus.png",
+  "Max": "./dog-photos/max.png",
+  "Pixie": "./dog-photos/pixie.png",
+  "Prissy": "./dog-photos/prissy.png",
+  "Ricky": "./dog-photos/ricky.png",
+  "Snow Cone": "./dog-photos/snowcone.png",
+  "Tonto": "./dog-photos/tonto.png",
 };
 
 function normalizeDogName(name) {
@@ -24,5 +24,5 @@ function normalizeDogName(name) {
 export function dogPhotoUrl(name) {
   const key = normalizeDogName(name);
   const entry = Object.entries(DOG_PHOTOS).find(([dog]) => normalizeDogName(dog) === key);
-  return entry?.[1] || null;
+  return entry?.[1] ? new URL(entry[1], import.meta.url).href : null;
 }
