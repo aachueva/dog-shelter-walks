@@ -72,7 +72,7 @@ function dogAvatar(name) {
   const url = dogPhotoUrl(name);
   const fallback = '<span class="dog-avatar-fallback" aria-hidden="true">🐾</span>';
   if (!url) return '<span class="dog-avatar">' + fallback + '</span>';
-  return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
+  return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
 }
 
 function renderPriorityCard(dog, rank) {
