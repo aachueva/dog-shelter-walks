@@ -2,6 +2,8 @@
 // Only add photos NorSled has authorized for reuse in this public app.
 // Names are matched without regard to capitalization or extra spaces.
 export const DOG_PHOTOS = {
+  "Bowie": "./dog-photos/bowie.png",
+  "Fable": "./dog-photos/fable.png",
   "Aspen": "./dog-photos/aspen.png",
   "Delilah": "./dog-photos/delilah.png",
   "Duke": "./dog-photos/duke.png",
