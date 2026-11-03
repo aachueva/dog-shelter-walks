@@ -28,7 +28,7 @@ jobs:
       - name: Copy dog photos into published site
         run: |
           mkdir -p public/dog-photos
-          for photo in aspen delilah duke klaus max pixie prissy ricky snowcone tonto; do
+          for photo in aspen bowie delilah duke fable klaus max pixie prissy ricky snowcone tonto; do
             if [ -f "$photo.png" ]; then cp "$photo.png" "public/dog-photos/$photo.png"; fi
           done
       - uses: actions/upload-pages-artifact@v3
