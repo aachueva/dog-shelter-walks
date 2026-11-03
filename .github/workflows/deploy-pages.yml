@@ -31,6 +31,12 @@ jobs:
           for photo in aspen bowie delilah duke fable klaus max pixie prissy ricky snowcone tonto; do
             if [ -f "$photo.png" ]; then cp "$photo.png" "public/dog-photos/$photo.png"; fi
           done
+      - name: Verify published dog photos
+        run: |
+          for photo in aspen bowie delilah duke fable klaus max pixie prissy ricky snowcone tonto; do
+            test -s "public/dog-photos/$photo.png" || { echo "::error::Missing public/dog-photos/$photo.png"; exit 1; }
+          done
+          ls -lh public/dog-photos/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
