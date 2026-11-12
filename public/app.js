@@ -75,6 +75,20 @@ function dogAvatar(name) {
   return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
 }
 
+// Temporary walker instructions. Review parasite status before extending these dates.
+const walkerAlerts = {
+  max: { message: "Do not feed treats.", level: "warning" },
+  tonto: { message: "Cleared of parasites.", level: "info" },
+  prissy: { message: "Keep away from other dogs and shared water bowls. Parasite check pending.", level: "warning" },
+};
+function dogWalkerAlert(name) {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  if (today < "2026-11-11" || today > "2026-11-17") return "";
+  const alert = walkerAlerts[String(name).trim().toLowerCase()];
+  if (!alert) return "";
+  return `<p class="walker-alert ${alert.level}" role="note"><strong>Walker note:</strong> ${escapeHtml(alert.message)}</p>`;
+}
+
 function renderPriorityCard(dog, rank) {
   const article = document.createElement("article");
   article.className = `priority-card ${dog.walksLast14Days === 0 ? "zero-walks" : ""}`;
@@ -83,7 +97,7 @@ function renderPriorityCard(dog, rank) {
     <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
     <div>
       <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
-      <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
+      ${dogWalkerAlert(dog.dog)}\n      <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
       <p class="recent-count">${dog.walksLast14Days} walk${dog.walksLast14Days === 1 ? "" : "s"} in 14 days</p>
       <a class="feedback-action" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
@@ -99,7 +113,7 @@ function renderDogRow(dog) {
     <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
     <div class="dog-main">
       <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
-      <p>${escapeHtml(describeLastWalk(dog))}</p>
+      ${dogWalkerAlert(dog.dog)}\n      <p>${escapeHtml(describeLastWalk(dog))}</p>
       <a class="feedback-action compact" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
     <div class="dog-total">
