@@ -292,3 +292,20 @@ footer {
 .heat-dog .dog-avatar { flex-basis: 25px; width: 25px; height: 25px; border-width: 1px; }
 .heat-dog .dog-avatar-fallback { font-size: 13px; }
 .heat-dog > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+
+/* Time-limited walker notes appear on both priority and roster cards. */
+.walker-alert, .dog-main p.walker-alert {
+  margin: 8px 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  font-size: .82rem;
+  line-height: 1.4;
+  color: #733121;
+  background: #fff0e9;
+  border: 1px solid #e8ae95;
+}
+.walker-alert.info, .dog-main p.walker-alert.info {
+  color: #245443;
+  background: #e8f3eb;
+  border-color: #b6d4bf;
+}
