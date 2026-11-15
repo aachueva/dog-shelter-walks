@@ -80,7 +80,7 @@ const walkerAlerts = {
   prissy: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   tonto: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   nakita: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  max: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", secondMessage: "NO TREATS — Do not feed Max any treats.", level: "warning" },
+  max: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", secondMessage: "TEMPORARY WEIGHT CONTROL — Do not feed Max any treats while his weight-control measure is in place.", level: "warning" },
   fable: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   bowie: { message: "NO GROUP WALKS — Shorter individual walks are okay until his vision is restored.", level: "warning" },
 };
