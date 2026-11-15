@@ -75,18 +75,18 @@ function dogAvatar(name) {
   return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
 }
 
-// Temporary walker instructions. Review parasite status before extending these dates.
+// Active shelter precautions. Remove individual alerts only after staff clearance.
 const walkerAlerts = {
-  max: { message: "Do not feed treats.", level: "warning" },
-  tonto: { message: "Cleared of parasites.", level: "info" },
-  prissy: { message: "Keep away from other dogs and shared water bowls. Parasite check pending.", level: "warning" },
+  prissy: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
+  tonto: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
+  nakita: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
+  max: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff. Do not feed treats.", level: "warning" },
+  fable: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
 };
 function dogWalkerAlert(name) {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Los_Angeles", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-  if (today < "2026-11-11" || today > "2026-11-17") return "";
   const alert = walkerAlerts[String(name).trim().toLowerCase()];
   if (!alert) return "";
-  return `<p class="walker-alert ${alert.level}" role="note"><strong>Walker note:</strong> ${escapeHtml(alert.message)}</p>`;
+  return `<p class="walker-alert ${alert.level}" role="note"><strong>⚠️ Walker note:</strong> ${escapeHtml(alert.message)}</p>`;
 }
 
 function renderPriorityCard(dog, rank) {
