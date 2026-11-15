@@ -82,11 +82,12 @@ const walkerAlerts = {
   nakita: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   max: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", secondMessage: "NO TREATS — Do not feed Max any treats.", level: "warning" },
   fable: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
+  bowie: { message: "NO GROUP WALKS — Shorter individual walks are okay until his vision is restored.", level: "warning" },
 };
 function dogWalkerAlert(name) {
   const alert = walkerAlerts[String(name).trim().toLowerCase()];
   if (!alert) return "";
-  return `<div role="note"><p class="walker-alert ${alert.level}"><strong>⚠️ Precaution 1 — Parasites:</strong> ${escapeHtml(alert.message)}</p>${alert.secondMessage ? `<p class="walker-alert ${alert.level}"><strong>🚫 Precaution 2 — Treats:</strong> ${escapeHtml(alert.secondMessage)}</p>` : ""}</div>`;
+  return `<div role="note"><p class="walker-alert ${alert.level}"><strong>⚠️ Walker precaution:</strong> ${escapeHtml(alert.message)}</p>${alert.secondMessage ? `<p class="walker-alert ${alert.level}"><strong>🚫 Precaution 2 — Treats:</strong> ${escapeHtml(alert.secondMessage)}</p>` : ""}</div>`;
 }
 
 function renderPriorityCard(dog, rank) {
