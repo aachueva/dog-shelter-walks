@@ -309,3 +309,15 @@ footer {
   background: #e8f3eb;
   border-color: #b6d4bf;
 }
+
+/* Parasite precautions are red; other walker cautions are amber. */
+.walker-alert.warning, .dog-main p.walker-alert.warning {
+  color: #8b1e1e;
+  background: #ffe3e3;
+  border: 2px solid #d32f2f;
+}
+.walker-alert.caution, .dog-main p.walker-alert.caution {
+  color: #7c4700;
+  background: #fff2cf;
+  border: 1px solid #e7a83b;
+}
