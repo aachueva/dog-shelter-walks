@@ -2,7 +2,7 @@ const SHEET_ID = "1jNjmPRSR7_QBQnX3O24o7ckEBKpl_jdLepSK4X5Z0Hk";
 const SHELTER_TIMEZONE = "America/Los_Angeles";
 const HISTORY_DAYS = 14;
 const PRIORITY_COUNT = 3;
-const ROSTER_API = "https://dog-shelter-walks.onrender.com/api/roster";
+// The Current Dogs tab is the single source of truth for the active roster and notes.
 
 function normalizeDogName(value) {
   return String(value || "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
@@ -54,7 +54,7 @@ export function parseCurrentDogs(table) {
     const key = normalizeDogName(dog);
     if (!key || ["dog", "dog name", "name", "canine"].includes(key) || seen.has(key)) return [];
     seen.add(key);
-    return [dog];
+    return [{ dog, notes: String(row[1] || "").trim() }];
   });
 }
 
@@ -81,7 +81,10 @@ function prioritySort(a, b) {
 export function buildDashboard(walks, currentDogs, today = shelterToday()) {
   const start = addDays(today, -(HISTORY_DAYS - 1));
   const dates = Array.from({ length: HISTORY_DAYS }, (_, index) => addDays(start, index));
-  const displayByKey = new Map(currentDogs.map((dog) => [normalizeDogName(dog), displayDogName(dog)]));
+  const displayByKey = new Map(currentDogs.map((entry) => {
+    const dog = displayDogName(typeof entry === "string" ? entry : entry.dog);
+    return [normalizeDogName(dog), { dog, notes: typeof entry === "string" ? "" : (entry.notes || "") }];
+  }));
   const walksByKey = new Map();
 
   for (const walk of walks) {
@@ -91,7 +94,7 @@ export function buildDashboard(walks, currentDogs, today = shelterToday()) {
     walksByKey.get(key).push(walk.date);
   }
 
-  const dogs = [...displayByKey].map(([key, dog]) => {
+  const dogs = [...displayByKey].map(([key, entry]) => {
     const dogWalks = (walksByKey.get(key) || []).sort();
     const dailyCounts = Object.fromEntries(dates.map((date) => [date, 0]));
     for (const date of dogWalks) {
@@ -99,7 +102,8 @@ export function buildDashboard(walks, currentDogs, today = shelterToday()) {
     }
     const lastWalkDate = dogWalks.at(-1) || null;
     return {
-      dog,
+      dog: entry.dog,
+      notes: entry.notes,
       walkedToday: dailyCounts[today] > 0,
       walksToday: dailyCounts[today],
       walksLast14Days: Object.values(dailyCounts).reduce((sum, count) => sum + count, 0),
@@ -170,28 +174,10 @@ function loadGvizTable(sheetName) {
   });
 }
 
-async function loadPrivateRoster({ forceRefresh = false } = {}) {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), forceRefresh ? 60000 : 2500);
-  try {
-    const url = forceRefresh ? `${ROSTER_API}?refresh=1` : ROSTER_API;
-    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
-    const payload = await response.json();
-    if (!response.ok || !Array.isArray(payload.dogs)) {
-      throw new Error(payload.error || "Could not load the SharePoint roster.");
-    }
-    return payload.dogs;
-  } finally {
-    window.clearTimeout(timeout);
-  }
-}
-
-export async function loadLiveDashboard({ forceRefresh = false } = {}) {
-  const [dogsTable, walksTable, privateRoster] = await Promise.all([
+export async function loadLiveDashboard() {
+  const [dogsTable, walksTable] = await Promise.all([
     loadGvizTable("Current Dogs"),
     loadGvizTable("Walks"),
-    loadPrivateRoster({ forceRefresh }).catch(() => null),
   ]);
-  const currentDogs = privateRoster?.length ? privateRoster : parseCurrentDogs(dogsTable);
-  return buildDashboard(parseWalks(walksTable), currentDogs);
+  return buildDashboard(parseWalks(walksTable), parseCurrentDogs(dogsTable));
 }
