@@ -1,5 +1,5 @@
 import { dogPhotoUrl } from "./dog-photos.mjs?v=20261102-avatar-fix";
-import { loadLiveDashboard } from "./dashboard-data.mjs?v=20260922-1";
+import { loadLiveDashboard } from "./dashboard-data.mjs?v=20261121-single-source";
 
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
@@ -75,21 +75,14 @@ function dogAvatar(name) {
   return '<a class="dog-avatar dog-avatar-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer" aria-label="View photo of ' + escapeHtml(name) + '"><img src="' + escapeHtml(url) + '" alt="' + escapeHtml(name) + '" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' + '<span class="dog-avatar-fallback" hidden aria-hidden="true">🐾</span></a>';
 }
 
-// Active shelter precautions. Remove individual alerts only after staff clearance.
-const walkerAlerts = {
-  prissy: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  tonto: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  nakita: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  max: { message: "TEMPORARY WEIGHT CONTROL — Do not feed Max any treats while his weight-control measure is in place.", level: "caution" },
-  rayben: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  blossom: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff. GROUP WALK ADJUSTMENT — Blossom may need time to get accustomed to group walks; individual walks are preferred initially.", level: "warning" },
-  nilla: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  bowie: { message: "NO GROUP WALKS — Shorter individual walks are okay until his vision is restored.", level: "caution" },
-};
-function dogWalkerAlert(name) {
-  const alert = walkerAlerts[String(name).trim().toLowerCase()];
-  if (!alert) return "";
-  return `<div role="note"><p class="walker-alert ${alert.level}"><strong>⚠️ Walker precaution:</strong> ${escapeHtml(alert.message)}</p>${alert.secondMessage ? `<p class="walker-alert ${alert.level}"><strong>🚫 Precaution 2 — Treats:</strong> ${escapeHtml(alert.secondMessage)}</p>` : ""}</div>`;
+// All walker notes are maintained in column B of the Current Dogs sheet.
+function dogWalkerAlert(dog) {
+  const notes = String(dog.notes || "").trim();
+  if (!notes) return "";
+  return notes.split(/\n+/).filter(Boolean).map((note) => {
+    const level = /PARASITE|NO GROUP WALKS/i.test(note) ? "warning" : "caution";
+    return `<p class="walker-alert ${level}" role="note"><strong>⚠️ Walker note:</strong> ${escapeHtml(note)}</p>`;
+  }).join("");
 }
 
 function renderPriorityCard(dog, rank) {
@@ -100,7 +93,7 @@ function renderPriorityCard(dog, rank) {
     <div class="priority-rank" aria-label="Priority ${rank}">${rank}</div>
     <div>
       <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
-      ${dogWalkerAlert(dog.dog)}\n      <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
+      ${dogWalkerAlert(dog)}\n      <p class="priority-reason">${escapeHtml(describeLastWalk(dog))}</p>
       <p class="recent-count">${dog.walksLast14Days} walk${dog.walksLast14Days === 1 ? "" : "s"} in 14 days</p>
       <a class="feedback-action" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
@@ -116,7 +109,7 @@ function renderDogRow(dog) {
     <div class="dog-state" aria-hidden="true">${dog.walkedToday ? "✓" : ""}</div>
     <div class="dog-main">
       <div class="dog-identity">${dogAvatar(dog.dog)}<h3><a class="dog-feedback-name" href="${feedbackUrl}" target="_blank" rel="noopener">${escapeHtml(dog.dog)}</a></h3></div>
-      ${dogWalkerAlert(dog.dog)}\n      <p>${escapeHtml(describeLastWalk(dog))}</p>
+      ${dogWalkerAlert(dog)}\n      <p>${escapeHtml(describeLastWalk(dog))}</p>
       <a class="feedback-action compact" href="${feedbackUrl}" target="_blank" rel="noopener">Leave feedback <span aria-hidden="true">↗</span></a>
     </div>
     <div class="dog-total">
