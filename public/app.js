@@ -80,7 +80,7 @@ function dogWalkerAlert(dog) {
   const notes = String(dog.notes || "").trim();
   if (!notes) return "";
   return notes.split(/\n+/).filter(Boolean).map((note) => {
-    const level = /PARASITE|NO GROUP WALKS/i.test(note) ? "warning" : "caution";
+    const level = /PARASITE/i.test(note) ? "warning" : "caution";
     return `<p class="walker-alert ${level}" role="note"><strong>⚠️ Walker note:</strong> ${escapeHtml(note)}</p>`;
   }).join("");
 }
