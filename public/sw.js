@@ -1,7 +1,7 @@
 const shellCache = "dog-shelter-walks-shell-v11";
 const shellFiles = [
   "./",
-  "./styles.css?v=20260921-1",
+  "./styles.css?v=20261121-alert-colors",
   "./app.js?v=20261121-parasite-clearance",
   "./dashboard-data.mjs?v=20260922-1",
   "./match.html",
