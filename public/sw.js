@@ -1,8 +1,8 @@
-const shellCache = "dog-shelter-walks-shell-v9";
+const shellCache = "dog-shelter-walks-shell-v10";
 const shellFiles = [
   "./",
   "./styles.css?v=20260921-1",
-  "./app.js?v=20261102-avatar-fix",
+  "./app.js?v=20261121-parasite-clearance",
   "./dashboard-data.mjs?v=20260922-1",
   "./match.html",
   "./match.css?v=20260918-4",
