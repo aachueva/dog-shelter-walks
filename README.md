@@ -1,5 +1,19 @@
 # Dog Shelter Walk Dashboard
 
+## IMPORTANT: Editing the live GitHub Pages dog-walking app
+
+Live app: https://aachueva.github.io/dog-shelter-walks/
+
+**Single source of truth: [Walk sheet manual](https://docs.google.com/spreadsheets/d/1jNjmPRSR7_QBQnX3O24o7ckEBKpl_jdLepSK4X5Z0Hk/edit)** (spreadsheet ID `1jNjmPRSR7_QBQnX3O24o7ckEBKpl_jdLepSK4X5Z0Hk`). This is **not** the separate "NorSled Dog Walk Tracker" spreadsheet.
+
+- Add/remove a current shelter dog: edit **Current Dogs**, column **A**. Row 1 is the header; do not delete it. Delete the dog's row when no longer in the shelter. Do not delete historical walk entries.
+- Add/change/remove a dog-walker precaution: edit **Current Dogs**, column **B**, on the same row. Multiple notes can be separated by line breaks. Parasite and no-group-walk notes display as warnings; other notes as cautions. Notes are read live, **not** hardcoded in `public/app.js`.
+- Record walks: edit the **Walks** tab of the same spreadsheet, preserving its existing row/date format. Do not edit "Walk Log" in the separate tracker expecting this app to update.
+- After changes, tap **Refresh** in the app. The app loads both tabs from this one sheet. If the app is offline, previously saved data may be displayed with a warning.
+- The site source is GitHub repo `aachueva/dog-shelter-walks`, `main`, in `public/`. Code changes are needed only for application behavior/layout, not routine dog or note updates.
+- When asked to update the dog-walking app in a future chat, **inspect this README and the live sheet first**. Verify the exact roster/notes in the sheet after edits, and do not claim the published site is updated until verified.
+
+
 A fast, phone-first dashboard that tells shelter volunteers which dogs should be walked next. Walk history comes from Google Sheets. The current roster can come from either a Google Sheet tab or NorSled's private SharePoint workbook.
 
 - **Current Dogs** is the authoritative shelter roster.
