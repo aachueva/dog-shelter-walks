@@ -80,11 +80,11 @@ const walkerAlerts = {
   prissy: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   tonto: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   nakita: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  max: { message: "TEMPORARY WEIGHT CONTROL — Do not feed Max any treats while his weight-control measure is in place.", level: "warning" },
+  max: { message: "TEMPORARY WEIGHT CONTROL — Do not feed Max any treats while his weight-control measure is in place.", level: "caution" },
   rayben: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   blossom: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
   nilla: { message: "PARASITE PRECAUTION — Keep separated from other dogs. No contact with other dogs or shared water bowls until cleared by shelter staff.", level: "warning" },
-  bowie: { message: "NO GROUP WALKS — Shorter individual walks are okay until his vision is restored.", level: "warning" },
+  bowie: { message: "NO GROUP WALKS — Shorter individual walks are okay until his vision is restored.", level: "caution" },
 };
 function dogWalkerAlert(name) {
   const alert = walkerAlerts[String(name).trim().toLowerCase()];
