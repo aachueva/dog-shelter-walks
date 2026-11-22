@@ -1,9 +1,9 @@
-const shellCache = "dog-shelter-walks-shell-v11";
+const shellCache = "dog-shelter-walks-shell-v12";
 const shellFiles = [
   "./",
   "./styles.css?v=20261121-alert-colors",
-  "./app.js?v=20261121-alert-colors",
-  "./dashboard-data.mjs?v=20260922-1",
+  "./app.js?v=20261121-single-source",
+  "./dashboard-data.mjs?v=20261121-single-source",
   "./match.html",
   "./match.css?v=20260918-4",
   "./match.js?v=20260918-5",
@@ -62,10 +62,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cached);
 
-      if (cached) {
-        event.waitUntil(update);
-        return cached;
-      }
+      // Prefer fresh code; only fall back to cached files when offline.
       return update;
     }),
   );
