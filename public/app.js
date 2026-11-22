@@ -231,6 +231,16 @@ const cachedDashboard = readCachedDashboard();
 if (cachedDashboard) render(cachedDashboard.data, { cached: true });
 loadDashboard({ hasCachedData: Boolean(cachedDashboard) });
 
+// Always use the live site; remove legacy offline service workers that can serve stale alerts.
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+  window.addEventListener("load", async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.filter((r) => r.scope.includes("/dog-shelter-walks/")).map((r) => r.unregister()));
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((key) => key.startsWith("dog-shelter-walks-shell-")).map((key) => caches.delete(key)));
+    } catch {
+      // Site remains usable even if cache cleanup is blocked.
+    }
+  });
 }
