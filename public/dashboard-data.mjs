@@ -38,9 +38,28 @@ export function shelterToday(now = new Date()) {
 }
 
 export function parseGoogleDate(value) {
-  const match = String(value || "").match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const gviz = raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  if (gviz) return `${gviz[1]}-${String(Number(gviz[2]) + 1).padStart(2, "0")}-${String(Number(gviz[3])).padStart(2, "0")}`;
+  // Google Visualization returns text-entered dates as strings, not Date(...).
+  // Accept both short and long month names, with an optional year.
+  const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  const match = raw.match(/^([a-z]+)\.?\s+(\d{1,2})(?:,?\s+(\d{4}))?$/i);
   if (!match) return null;
-  return `${match[1]}-${String(Number(match[2]) + 1).padStart(2, "0")}-${String(Number(match[3])).padStart(2, "0")}`;
+  const month = months[match[1].slice(0, 3).toLowerCase()];
+  if (month === undefined) return null;
+  const today = shelterToday();
+  let year = match[3] ? Number(match[3]) : Number(today.slice(0, 4));
+  const day = Number(match[2]);
+  let date = new Date(Date.UTC(year, month, day));
+  if (date.getUTCMonth() !== month || date.getUTCDate() !== day) return null;
+  if (!match[3] && isoDate(date) > today) {
+    year -= 1;
+    date = new Date(Date.UTC(year, month, day));
+  }
+  return isoDate(date);
 }
 
 export function tableRows(table) {
