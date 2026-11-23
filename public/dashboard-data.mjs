@@ -40,7 +40,11 @@ export function shelterToday(now = new Date()) {
 export function parseGoogleDate(value) {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
-  const gviz = raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+  // Some Sheets GViz columns expose serial date numbers instead of Date(...).
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return isoDate(new Date(Date.UTC(1899, 11, 30) + Math.floor(value) * 86400000));
+  }
+  const gviz = raw.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})(?:,\d{1,2},\d{1,2},\d{1,2})?\)$/);
   if (gviz) return `${gviz[1]}-${String(Number(gviz[2]) + 1).padStart(2, "0")}-${String(Number(gviz[3])).padStart(2, "0")}`;
   // Google Visualization returns text-entered dates as strings, not Date(...).
   // Accept both short and long month names, with an optional year.
@@ -63,7 +67,7 @@ export function parseGoogleDate(value) {
 }
 
 export function tableRows(table) {
-  return (table?.rows || []).map((row) => (row.c || []).map((cell) => cell?.v ?? ""));
+  return (table?.rows || []).map((row) => (row.c || []).map((cell) => cell?.v ?? cell?.f ?? ""));
 }
 
 export function parseCurrentDogs(table) {
