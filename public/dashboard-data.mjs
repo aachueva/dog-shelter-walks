@@ -96,8 +96,9 @@ export function parseWalks(table) {
 
 function priorityTier(dog) {
   if (normalizeDogName(dog.dog) === "ricky") return 0;
-  if (/PARASITE/i.test(dog.notes)) return 1;
-  return 2;
+  if (normalizeDogName(dog.dog) === "max") return 1;
+  if (/PARASITE/i.test(dog.notes)) return 2;
+  return 3;
 }
 
 function prioritySort(a, b) {
@@ -144,7 +145,7 @@ export function buildDashboard(walks, currentDogs, today = shelterToday()) {
   });
 
   const ranked = dogs.sort(prioritySort);
-  for (const dog of ranked) dog.priority = priorityTier(dog) < 2;
+  for (const dog of ranked) dog.priority = priorityTier(dog) < 3;
 
   const priorityDogs = ranked.filter((dog) => dog.priority);
   const otherDogs = ranked.filter((dog) => !dog.priority);
