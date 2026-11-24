@@ -1,5 +1,5 @@
 import { dogPhotoUrl } from "./dog-photos.mjs?v=20261102-avatar-fix";
-import { loadLiveDashboard } from "./dashboard-data.mjs?v=20261124-parasite-priority";
+import { loadLiveDashboard } from "./dashboard-data.mjs?v=20261124-max-priority";
 
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
