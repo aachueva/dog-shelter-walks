@@ -1,5 +1,5 @@
 import { dogPhotoUrl } from "./dog-photos.mjs?v=20261102-avatar-fix";
-import { loadLiveDashboard } from "./dashboard-data.mjs?v=20261124-manual-priority";
+import { loadLiveDashboard } from "./dashboard-data.mjs?v=20261124-parasite-priority";
 
 const $ = (id) => document.getElementById(id);
 const refreshBtn = $("refresh-btn");
@@ -177,7 +177,7 @@ function render(data, { cached = false } = {}) {
   priorityGrid.className = "priority-grid";
   priorityGrid.innerHTML = "";
   if (!data.priorityDogs.length) {
-    priorityGrid.innerHTML = '<p class="all-walked">Every current dog has already walked today.</p>';
+    priorityGrid.innerHTML = '<p class="all-walked">No designated priority dogs at the moment.</p>';
   } else {
     data.priorityDogs.forEach((dog, index) => priorityGrid.appendChild(renderPriorityCard(dog, index + 1)));
   }
