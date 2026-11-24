@@ -96,6 +96,7 @@ export function parseWalks(table) {
 
 function prioritySort(a, b) {
   return Number(a.walkedToday) - Number(b.walkedToday)
+    || Number(/^PRIORITY WALK\b/im.test(b.notes)) - Number(/^PRIORITY WALK\b/im.test(a.notes))
     || a.walksLast14Days - b.walksLast14Days
     || String(a.lastWalkDate || "0000-00-00").localeCompare(String(b.lastWalkDate || "0000-00-00"))
     || a.dog.localeCompare(b.dog, undefined, { sensitivity: "base" });
@@ -138,10 +139,11 @@ export function buildDashboard(walks, currentDogs, today = shelterToday()) {
 
   const ranked = dogs.sort(prioritySort);
   const eligible = ranked.filter((dog) => !dog.walkedToday);
-  const initialPriority = eligible.slice(0, PRIORITY_COUNT);
+  const automaticEligible = eligible.filter((dog) => !/^PRIORITY WALK\b/im.test(dog.notes));
+  const initialPriority = automaticEligible.slice(0, PRIORITY_COUNT);
   const cutoff = initialPriority.at(-1)?.walksLast14Days;
   const priorityKeys = new Set(cutoff == null ? [] : eligible.filter((dog) => dog.walksLast14Days <= cutoff).map((dog) => normalizeDogName(dog.dog)));
-  for (const dog of ranked) dog.priority = priorityKeys.has(normalizeDogName(dog.dog));
+  for (const dog of ranked) dog.priority = !dog.walkedToday && (/^PRIORITY WALK\b/im.test(dog.notes) || priorityKeys.has(normalizeDogName(dog.dog)));
 
   const priorityDogs = ranked.filter((dog) => dog.priority);
   const otherDogs = ranked.filter((dog) => !dog.priority);
